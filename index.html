@@ -17,7 +17,6 @@
             background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.3) 100%);
             box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.3), 0 4px 6px rgba(0,0,0,0.2);
         }
-        /* 色覚多様性（色弱）対応：色＋独自の幾何学パターンやテクスチャ・枠線を付与 */
         .block-red { 
             background: linear-gradient(135deg, #ff6b6b 0%, #e03131 100%);
             border: 2px dashed rgba(255, 255, 255, 0.7);
@@ -50,7 +49,6 @@
             pointer-events: none;
         }
 
-        /* 満足感のある贅沢な消去演出：激しいポップ・発光・シェイク・粒子エフェクト風アニメーション */
         @keyframes luxury-clear {
             0% { transform: scale(1) rotate(0deg); filter: brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0)); opacity: 1; }
             20% { transform: scale(1.25) rotate(-6deg); filter: brightness(3.5) drop-shadow(0 0 12px rgba(255,255,255,1)); opacity: 0.9; }
@@ -119,7 +117,7 @@
                 </div>
             </div>
 
-            <!-- プログレスバー（直感的な進捗表示） -->
+            <!-- プログレスバー -->
             <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-700">
                 <div id="progress-bar-fill" class="bg-red-500 h-full transition-all duration-300" style="width: 0%;"></div>
             </div>
@@ -153,7 +151,7 @@
                     <div class="text-xs text-slate-300 space-y-2 overflow-y-auto max-h-[220px] px-1 text-left w-full bg-slate-900/80 p-2 rounded-lg border border-slate-700">
                         <p><strong class="text-red-400">🔥 サウナフェーズ:</strong> 赤ブロックが上下左右に8個以上繋がると消去され、水風呂フェーズへ突入！</p>
                         <p><strong class="text-blue-400">💧 水風呂フェーズ:</strong> 横一列が青ブロックで埋まると消去。上下に連続する青ブロックも一緒に巻き込んで消え、ととのいフェーズへ！</p>
-                        <p><strong class="text-green-400">🌿 ととのいフェーズ:</strong> 緑ブロックが上下左右に4つ以上繋がると消去。「と」「と」「の」「ったー！」と4回消すと雑念ブロックが全て浄化されサウナフェーズへ復帰！</p>
+                        <p><strong class="text-green-400">🌿 ととのいフェーズ:</strong> 緑ブロックが上下左右に4つ以上繋がると消去。「と」「とと」「ととの」「ととのったー！」と文字が成長し、4回消すと雑念ブロックが全て浄化されサウナフェーズへ復帰！</p>
                     </div>
                     <button onclick="hideRules()" class="mt-2 w-full max-w-[180px] py-2 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white">
                         戻る
@@ -454,13 +452,11 @@
                 }
 
                 if (clearedCoords.length > 0) {
-                    // 各消去セルにリッチなポップ・発光アニメーションを適用
                     for (let cell of clearedCoords) {
                         const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
                         if (cellEl) cellEl.classList.add('clearing-anim');
                     }
 
-                    // 演出時間を少し長めに確保し、プレイヤーが消去をしっかり認識できるようにする (750ms)
                     setTimeout(() => {
                         for (let cell of clearedCoords) {
                             board[cell.r][cell.c] = TYPE_EMPTY;
@@ -495,9 +491,10 @@
                             scoreEl.textContent = score;
 
                             let bannerText = "";
-                            if (totonoClearStep === 1 || totonoClearStep === 2) bannerText = "と";
-                            else if (totonoClearStep === 3) bannerText = "の";
-                            else if (totonoClearStep >= 4) bannerText = "ったー！";
+                            if (totonoClearStep === 1) bannerText = "と";
+                            else if (totonoClearStep === 2) bannerText = "とと";
+                            else if (totonoClearStep === 3) bannerText = "ととの";
+                            else if (totonoClearStep >= 4) bannerText = "ととのったー！";
                             
                             showTotonottaBanner(bannerText);
 
@@ -523,7 +520,6 @@
             stepChain();
         }
 
-        // 自然落下をより滑らかに見せるアニメーション処理
         function applyGravityWithAnimation(callback) {
             let fallMap = [];
             let maxFallSteps = 0;
@@ -572,7 +568,6 @@
                 fallMap.forEach(item => {
                     let cellEl = document.getElementById(`cell-${item.toR}-${item.c}`);
                     if (cellEl) {
-                        // 落下アニメーションに少し弾み（ease-out）を持たせ、着地の心地よさを向上
                         cellEl.style.transition = 'transform 0.32s cubic-bezier(0.25, 1, 0.5, 1)';
                         cellEl.style.transform = 'translateY(0)';
                     }
@@ -790,7 +785,6 @@
                 phaseSubEl.textContent = "赤8個連結で水風呂へ";
                 borderColor = "border-red-500";
                 progressBarFillEl.className = "bg-red-500 h-full transition-all duration-300";
-                // サウナフェーズの進捗を簡易計算 (盤面の赤ブロック数 / 目安8個)
                 let redCount = 0;
                 for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(board[r][c]===TYPE_SAUNA) redCount++;
                 progressPercent = Math.min(100, (redCount / 8) * 100);
@@ -800,7 +794,7 @@
                 phaseSubEl.textContent = "青1列完成でととのいへ";
                 borderColor = "border-blue-500";
                 progressBarFillEl.className = "bg-blue-500 h-full transition-all duration-300";
-                progressPercent = 50; // 固定目安
+                progressPercent = 50;
             } else if (currentPhase === PHASE_TOTONO) {
                 phaseBadgeName = "ととのいフェーズ";
                 phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-green-600 glossy shadow";
