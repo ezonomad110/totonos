@@ -307,7 +307,8 @@
         function generateRandomPiece() {
             let types = [];
             if (currentPhase === PHASE_TOTONO) {
-                types = [TYPE_TOTONO, TYPE_TOTONO];
+                // ととのいフェーズでは緑(TOTONO)に加えてサウナ、水風呂、雑念もランダムに出現
+                types = [TYPE_TOTONO, TYPE_TOTONO, TYPE_SAUNA, TYPE_COLD, TYPE_JAMMER];
             } else {
                 types = [TYPE_SAUNA, TYPE_COLD, TYPE_JAMMER];
             }
@@ -456,7 +457,7 @@
                             scoreEl.textContent = score;
                             showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
                             currentPhase = PHASE_TOTONO;
-                            totonoClearStep = 0; // 回数リセット
+                            totonoClearStep = 0;
                             nextPiece = generateRandomPiece();
                             updateUI();
                             applyGravityWithAnimation(() => {
@@ -468,7 +469,6 @@
                             score += 200;
                             scoreEl.textContent = score;
 
-                            // 演出表示
                             let bannerText = "";
                             if (totonoClearStep === 1 || totonoClearStep === 2) bannerText = "と";
                             else if (totonoClearStep === 3) bannerText = "の";
@@ -498,7 +498,6 @@
             stepChain();
         }
 
-        // 自然落下を滑らかに見せるアニメーション処理
         function applyGravityWithAnimation(callback) {
             let fallMap = [];
             let maxFallSteps = 0;
@@ -648,7 +647,6 @@
             return coords;
         }
 
-        // ととのいフェーズ消去条件：上下左右に4つ以上つながった緑ブロックの最初のまとまりを消去
         function getTotonoClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
 
@@ -678,7 +676,7 @@
                         }
 
                         if (group.length >= 4) {
-                            return group; // 条件を満たす4個以上のまとまりを返却
+                            return group;
                         }
                     }
                 }
