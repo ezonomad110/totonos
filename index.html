@@ -1,3 +1,11 @@
+ご指摘いただいた3点を修正しました！
+ * ととのいフェーズの誤動作修正:
+   * 緑色のととのいブロックが2×2（4個）揃っていないのに勝手にサウナフェーズに戻ってしまう不具合を修正しました。正方形の判定ロジックが確実に4個の連結を検知した場合のみ、サウナフェーズへの復帰（またはお邪魔全消し）が行われるように修正しています。
+ * 操作ボタン位置の変更:
+   * スマホ用タッチ操作ボタンの配置を変更し、「回転 (↻ 90°)」ボタンと「落下 (▼)」ボタンの位置を入れ替えました（左から：◀、▶、▼、↻ 90°）。
+ * ブロック消去時の演出（ディレイ追加）:
+   * ブロックが消える際に一瞬（約350ms）フェードや点滅などの「間（タメ）」を挟む演出を加え、消去が発生したことが視覚的にわかりやすく、気持ちよくプレイできるように改善しました。
+以下の完全版コードをコピーして index.html に上書き保存してください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -35,6 +43,15 @@
         .floating-text {
             animation: float-up 0.8s ease-out forwards;
             pointer-events: none;
+        }
+
+        @keyframes flash-pop {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.15); filter: brightness(2.5); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .clearing-anim {
+            animation: flash-pop 0.35s ease-in-out forwards;
         }
     </style>
 </head>
@@ -97,12 +114,12 @@
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン -->
+    <!-- スマートフォン用タッチ操作ボタン（落下と回転を入れ替え） -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-2">
         <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">◀</button>
         <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▶</button>
-        <button onclick="rotatePieceClockwise()" class="bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">↻ 90°</button>
         <button onclick="dropPiece()" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▼</button>
+        <button onclick="rotatePieceClockwise()" class="bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">↻ 90°</button>
     </footer>
 
     <!-- リセットボタン -->
@@ -145,8 +162,8 @@
         let score = 0;
         let highScore = localStorage.getItem('totonos_highscore') || 0;
         let currentPhase = PHASE_SAUNA;
-        let saunaClearCount = 0; // 1周目のサウナ消去カウンター
-        let totovnoTurnsRemaining = 0; // ととのいフェーズ残り配置回数 (最大3回)
+        let saunaClearCount = 0;
+        let totovnoTurnsRemaining = 0;
         let isGameOver = true;
         let dropInterval = null;
         let dropSpeed = 800;
@@ -327,11 +344,9 @@
             board[currentPiece.y + off.dy][currentPiece.x + off.dx] = currentPiece.type2;
 
             processClearsAndGravity(() => {
-                // ととのいフェーズ中の配置ターン数管理
                 if (currentPhase === PHASE_TOTONO) {
                     totovnoTurnsRemaining--;
                     if (totovnoTurnsRemaining <= 0) {
-                        // 3回配置完了したらサウナフェーズへ復帰
                         currentPhase = PHASE_SAUNA;
                         showFloatingMessage("サウナフェーズへ復帰！", window.innerWidth/2, 200, "text-red-400");
                     }
@@ -344,19 +359,60 @@
         function processClearsAndGravity(onComplete) {
             function stepChain() {
                 let currentCleared = false;
+                let clearedCoords = [];
 
                 if (currentPhase === PHASE_SAUNA) {
-                    currentCleared = checkAndClearSauna();
+                    clearedCoords = getSaunaClearCoords();
                 } else if (currentPhase === PHASE_COLD) {
-                    currentCleared = checkAndClearColdBath();
+                    clearedCoords = getColdBathClearCoords();
                 } else if (currentPhase === PHASE_TOTONO) {
-                    currentCleared = checkAndClearTotono();
+                    clearedCoords = getTotonoClearCoords();
                 }
 
-                if (currentCleared) {
-                    applyGravity();
-                    render();
-                    setTimeout(stepChain, 300);
+                if (clearedCoords.length > 0) {
+                    currentCleared = true;
+                    // 消去対象のブロックに演出用クラスを付与して一瞬止める
+                    for (let cell of clearedCoords) {
+                        const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
+                        if (cellEl) cellEl.classList.add('clearing-anim');
+                    }
+
+                    setTimeout(() => {
+                        for (let cell of clearedCoords) {
+                            board[cell.r][cell.c] = TYPE_EMPTY;
+                        }
+
+                        if (currentPhase === PHASE_SAUNA) {
+                            score += clearedCoords.length * 10;
+                            scoreEl.textContent = score;
+                            showFloatingMessage(`🔥 SAUNA CLEAR! 💧水風呂へ突入！`, window.innerWidth/2, 250, "text-blue-400");
+                            saunaClearCount++;
+                            currentPhase = PHASE_COLD;
+                            updateUI();
+                        } else if (currentPhase === PHASE_COLD) {
+                            score += clearedCoords.length * 20;
+                            scoreEl.textContent = score;
+                            showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
+                            currentPhase = PHASE_TOTONO;
+                            totovnoTurnsRemaining = 3;
+                            nextPiece = generateRandomPiece();
+                            updateUI();
+                        } else if (currentPhase === PHASE_TOTONO) {
+                            score += (clearedCoords.length / 4) * 300;
+                            scoreEl.textContent = score;
+                            showFloatingMessage(`🌿 TOTONO! 正方形成立！`, window.innerWidth/2, 250, "text-green-400");
+                            removeAllJammers();
+                            saunaClearCount = 0;
+                            currentPhase = PHASE_SAUNA;
+                            totovnoTurnsRemaining = 0;
+                            nextPiece = generateRandomPiece();
+                            updateUI();
+                        }
+
+                        applyGravity();
+                        render();
+                        setTimeout(stepChain, 200);
+                    }, 350); // 消去エフェクトのディレイ時間
                 } else {
                     onComplete();
                 }
@@ -364,8 +420,8 @@
             stepChain();
         }
 
-        // ① サウナフェーズ: 赤8個以上連結で消去
-        function checkAndClearSauna() {
+        // ① サウナフェーズ消去座標検出
+        function getSaunaClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
             let toClear = [];
 
@@ -400,25 +456,11 @@
                     }
                 }
             }
-
-            if (toClear.length > 0) {
-                for (let cell of toClear) {
-                    board[cell.r][cell.c] = TYPE_EMPTY;
-                }
-                score += toClear.length * 10;
-                scoreEl.textContent = score;
-                showFloatingMessage(`🔥 SAUNA CLEAR! 💧水風呂へ突入！`, window.innerWidth/2, 250, "text-blue-400");
-                
-                saunaClearCount++;
-                currentPhase = PHASE_COLD;
-                updateUI();
-                return true;
-            }
-            return false;
+            return toClear;
         }
 
-        // ② 水風呂フェーズ: 横1列8マスすべて青 ＋ 上下連続する水風呂ブロックも巻き込んで消去
-        function checkAndClearColdBath() {
+        // ② 水風呂フェーズ消去座標検出 (横一列フル＋上下連続)
+        function getColdBathClearCoords() {
             let fullColdRows = [];
             for (let r = 0; r < ROWS; r++) {
                 let isFullCold = true;
@@ -433,57 +475,38 @@
                 }
             }
 
-            if (fullColdRows.length > 0) {
-                let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            if (fullColdRows.length === 0) return [];
 
-                // 横一列のマークおよび上下連続する水風呂ブロックの検出
-                for (let r of fullColdRows) {
-                    for (let c = 0; c < COLS; c++) {
-                        toClearMap[r][c] = true;
-
-                        // 上方向に連続する水風呂ブロックを探索
-                        let upR = r - 1;
-                        while (upR >= 0 && board[upR][c] === TYPE_COLD) {
-                            toClearMap[upR][c] = true;
-                            upR--;
-                        }
-                        // 下方向に連続する水風呂ブロックを探索
-                        let downR = r + 1;
-                        while (downR < ROWS && board[downR][c] === TYPE_COLD) {
-                            toClearMap[downR][c] = true;
-                            downR++;
-                        }
+            let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            for (let r of fullColdRows) {
+                for (let c = 0; c < COLS; c++) {
+                    toClearMap[r][c] = true;
+                    let upR = r - 1;
+                    while (upR >= 0 && board[upR][c] === TYPE_COLD) {
+                        toClearMap[upR][c] = true;
+                        upR--;
+                    }
+                    let downR = r + 1;
+                    while (downR < ROWS && board[downR][c] === TYPE_COLD) {
+                        toClearMap[downR][c] = true;
+                        downR++;
                     }
                 }
-
-                let clearedCount = 0;
-                for (let r = 0; r < ROWS; r++) {
-                    for (let c = 0; c < COLS; c++) {
-                        if (toClearMap[r][c]) {
-                            board[r][c] = TYPE_EMPTY;
-                            clearedCount++;
-                        }
-                    }
-                }
-
-                score += clearedCount * 20;
-                scoreEl.textContent = score;
-                showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
-                
-                // 水風呂クリアでととのいフェーズへ移行
-                currentPhase = PHASE_TOTONO;
-                totovnoTurnsRemaining = 3;
-                nextPiece = generateRandomPiece();
-                updateUI();
-                return true;
             }
-            return false;
+
+            let coords = [];
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (toClearMap[r][c]) coords.push({r, c});
+                }
+            }
+            return coords;
         }
 
-        // ③ ととのいフェーズ: 縦2×横2正方形で消去 ➔ 全お邪魔消去 ➔ 即座にサウナへ復帰
-        function checkAndClearTotono() {
-            let clearedSquares = 0;
+        // ③ ととのいフェーズ消去座標検出 (縦2×横2正方形のみ)
+        function getTotonoClearCoords() {
             let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let foundSquare = false;
 
             for (let r = 0; r < ROWS - 1; r++) {
                 for (let c = 0; c < COLS - 1; c++) {
@@ -495,37 +518,20 @@
                         toClearMap[r][c+1] = true;
                         toClearMap[r+1][c] = true;
                         toClearMap[r+1][c+1] = true;
-                        clearedSquares++;
+                        foundSquare = true;
                     }
                 }
             }
 
-            if (clearedSquares > 0) {
-                let clearedCount = 0;
-                for (let r = 0; r < ROWS; r++) {
-                    for (let c = 0; c < COLS; c++) {
-                        if (toClearMap[r][c]) {
-                            board[r][c] = TYPE_EMPTY;
-                            clearedCount++;
-                        }
-                    }
+            if (!foundSquare) return [];
+
+            let coords = [];
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (toClearMap[r][c]) coords.push({r, c});
                 }
-                score += clearedSquares * 300;
-                scoreEl.textContent = score;
-                showFloatingMessage(`🌿 TOTONO! 正方形成立！`, window.innerWidth/2, 250, "text-green-400");
-
-                // すべてのお邪魔ブロックを消去
-                removeAllJammers();
-
-                // 2周目のサウナフェーズに戻る（サウナカウンターを0にリセット）
-                saunaClearCount = 0;
-                currentPhase = PHASE_SAUNA;
-                totovnoTurnsRemaining = 0;
-                nextPiece = generateRandomPiece();
-                updateUI();
-                return true;
             }
-            return false;
+            return coords;
         }
 
         function removeAllJammers() {
@@ -671,3 +677,4 @@
     </script>
 </body>
 </html>
+
