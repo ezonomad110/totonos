@@ -1,237 +1,678 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F.I.R.E.到達年齢シミュレーター</title>
-<style>
-body{margin:0;background:#f5f6f8;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
-.container{max-width:1100px;margin:auto;padding:20px}
-h1{font-size:28px;margin:0 0 8px}.lead{color:#666;margin:0 0 20px}
-.card{background:#fff;border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 2px 12px rgba(0,0,0,.06)}
-h2{font-size:20px;margin:0 0 14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-label{display:block;font-size:13px;color:#555;margin-bottom:5px}
-input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccd0d5;border-radius:8px;font-size:16px}
-button{border:0;border-radius:9px;background:#222;color:#fff;font-size:17px;font-weight:600;padding:13px 24px;cursor:pointer}
-button:active{transform:translateY(1px)}
-.action{text-align:center;margin:20px 0}
-.message{padding:14px;border-radius:9px;background:#f0f2f5;color:#666;text-align:center}
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.metric{background:#f0f2f5;border-radius:10px;padding:12px}.metric strong{display:block;font-size:20px;margin-top:4px}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #eee;text-align:right}th:first-child,td:first-child{text-align:center}
-.scroll{overflow:auto}
-svg{width:100%;height:330px;display:block}
-.note{font-size:12px;color:#666;line-height:1.7}
-.good{background:#eef7ee}.warn{background:#fff8e8}.bad{background:#fdeeee}
-@media(max-width:600px){.container{padding:12px}h1{font-size:23px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TOTONOS -トトノス-</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .glossy {
+            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.3) 100%);
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.3), 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .block-red { background: linear-gradient(135deg, #ff6b6b 0%, #e03131 100%); }
+        .block-blue { background: linear-gradient(135deg, #4dabf7 0%, #1971c2 100%); }
+        .block-gray { background: linear-gradient(135deg, #adb5bd 0%, #495057 100%); }
+        .block-green { background: linear-gradient(135deg, #69db7c 0%, #2b8a3e 100%); }
+        
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 2px rgba(255,255,255,0.8)); }
+            50% { filter: drop-shadow(0 0 8px rgba(255,255,255,1)); }
+        }
+        .icon-glow { animation: pulse-glow 2s infinite; }
+        
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-40px) scale(1.2); opacity: 0; }
+        }
+        .floating-text {
+            animation: float-up 0.8s ease-out forwards;
+            pointer-events: none;
+        }
+    </style>
 </head>
-<body>
-<div class="container">
-<h1>F.I.R.E.到達年齢シミュレーター</h1>
-<p class="lead">資産・生活費・年金・暴落条件を入力して、FIRE後の資産推移をシミュレーションします。</p>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-between p-2 sm:p-4 overflow-x-hidden">
 
-<div class="card">
-<h2>① 基本条件</h2>
-<div class="grid">
-<div><label>FIRE開始年齢</label><input id="start" type="number" placeholder="入力してください"></div>
-<div><label>終了年齢</label><input id="end" type="number" placeholder="入力してください"></div>
-<div><label>運用資産（万円）</label><input id="investment" type="number" placeholder="入力してください"></div>
-<div><label>現金（万円）</label><input id="cash" type="number" placeholder="入力してください"></div>
-<div><label>年間運用利回り（%）</label><input id="returnRate" type="number" step="0.1" placeholder="入力してください"></div>
-<div><label>インフレ率（%）</label><input id="inflation" type="number" step="0.1" placeholder="入力してください"></div>
-<div><label>年間生活費（開始〜59歳・万円）</label><input id="spendBefore60" type="number" placeholder="入力してください"></div>
-<div><label>年間生活費（60歳以降・万円）</label><input id="spendAfter60" type="number" placeholder="入力してください"></div>
-</div>
-</div>
+    <!-- ヘッダー -->
+    <header class="text-center my-1">
+        <h1 class="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
+            TOTONOS <span class="text-xs sm:text-sm font-bold text-slate-300">-トトノス-</span>
+        </h1>
+    </header>
 
-<div class="card">
-<h2>② 年金</h2>
-<div class="grid">
-<div><label>65歳時点の年金見込額（万円/年）</label><input id="pensionBase" type="number" placeholder="入力してください"></div>
-<div><label>年金受給開始年齢（60〜75歳）</label><input id="pensionAge" type="number" min="60" max="75" placeholder="入力してください"></div>
-</div>
-<p id="pensionResult" class="message">年金額は「計算する」を押すと自動計算されます。</p>
-</div>
+    <!-- メインコンテンツ領域 -->
+    <main class="flex flex-col lg:flex-row items-center justify-center gap-4 w-full max-w-4xl flex-1">
+        
+        <!-- 左側・あるいはスマホ上部：盤面 -->
+        <div class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-slate-700">
+            <!-- グリッドボード (8列 × 12行) -->
+            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg" style="width: min(78vw, 280px); height: min(117vw, 420px);">
+                <!-- JSで動的生成 -->
+            </div>
 
-<div class="card">
-<h2>③ FIRE直後の暴落</h2>
-<div class="grid">
-<div><label>FIRE直後の運用資産暴落率（%）</label><input id="crash" type="number" min="0" max="100" placeholder="入力してください"></div>
-</div>
-</div>
+            <!-- ゲームオーバー / スタートオーバーレイ -->
+            <div id="overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300">
+                <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
+                <p id="overlay-desc" class="text-sm text-slate-300 mb-6 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
+                <button id="start-btn" onclick="startGame()" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110">
+                    ゲームスタート
+                </button>
+            </div>
+        </div>
 
-<div class="action"><button type="button" onclick="runSimulation()">計算する</button></div>
+        <!-- 右側・あるいはスマホ下部：ステータス＆コントロール -->
+        <div class="flex flex-row lg:flex-col justify-between items-center lg:items-stretch gap-3 w-full max-w-[280px] lg:max-w-[200px]">
+            
+            <!-- NEXT プレビュー -->
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-inner flex flex-col items-center">
+                <span class="text-xs font-bold text-slate-400 mb-1 tracking-widest">NEXT</span>
+                <div id="next-preview" class="flex flex-col gap-1 w-10 h-20 bg-slate-900 p-1 rounded-lg items-center justify-center border border-slate-700">
+                    <!-- 2ブロックプレビュー -->
+                </div>
+            </div>
 
-<div id="results">
-<div class="card"><div class="message">条件を入力して「計算する」を押してください。</div></div>
-</div>
-</div>
+            <!-- 現在のフェーズ表示 -->
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-inner text-center flex-1 lg:flex-none">
+                <div class="text-[10px] font-bold text-slate-400 tracking-wider">PHASE</div>
+                <div id="phase-badge" class="mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-red-600 shadow-md">
+                    サウナフェーズ
+                </div>
+                <div id="phase-sub" class="text-[10px] text-slate-400 mt-1">残り配置: -</div>
+                <!-- サウナフェーズからの手動移行ボタン -->
+                <button id="transition-btn" onclick="trySwitchToColdBath()" class="mt-2 w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-lg glossy hidden transition active:scale-95 shadow">
+                    💧 水風呂へ移行
+                </button>
+            </div>
 
-<script>
-function getNumber(id){
-  var el=document.getElementById(id);
-  var v=el.value.trim();
-  return v==="" ? NaN : Number(v);
-}
-function fmt(v){
-  return Math.round(v).toLocaleString("ja-JP")+"万円";
-}
-function pensionFactor(age){
-  if(age<=65) return 1-(65-age)*12*0.004;
-  return 1+(age-65)*12*0.007;
-}
-function runSimulation(){
-  try{
-    var start=getNumber("start"), end=getNumber("end");
-    var investment=getNumber("investment"), cash=getNumber("cash");
-    var returnRate=getNumber("returnRate")/100;
-    var inflation=getNumber("inflation")/100;
-    var spendBefore60=getNumber("spendBefore60");
-    var spendAfter60=getNumber("spendAfter60");
-    var pensionBase=getNumber("pensionBase");
-    var pensionAge=getNumber("pensionAge");
-    var crash=getNumber("crash");
+            <!-- スコア表示 -->
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-inner text-center">
+                <div class="text-[10px] font-bold text-slate-400 tracking-wider">SCORE</div>
+                <div id="score" class="text-xl sm:text-2xl font-black text-amber-400 tracking-tight">0</div>
+                <div class="text-[10px] font-bold text-slate-400 tracking-wider mt-1">HIGH SCORE</div>
+                <div id="highscore" class="text-sm font-bold text-slate-300">0</div>
+            </div>
 
-    var values=[start,end,investment,cash,returnRate,inflation,spendBefore60,spendAfter60,pensionBase,pensionAge,crash];
-    for(var i=0;i<values.length;i++){
-      if(!Number.isFinite(values[i])){
-        alert("すべての入力項目を入力してください。");
-        return;
-      }
-    }
-    if(end<=start){alert("終了年齢はFIRE開始年齢より大きくしてください。");return;}
-    if(pensionAge<60 || pensionAge>75){alert("年金受給開始年齢は60〜75歳で入力してください。");return;}
-    if(crash<0 || crash>100){alert("暴落率は0〜100%で入力してください。");return;}
+            <!-- リセットボタン -->
+            <button onclick="resetGame()" class="hidden lg:block py-2 bg-slate-700 hover:bg-slate-600 font-bold rounded-xl text-xs glossy transition active:scale-95">
+                リセット
+            </button>
+        </div>
+    </main>
 
-    var factor=pensionFactor(pensionAge);
-    var adjustedPension=pensionBase*factor;
+    <!-- スマートフォン用タッチ操作ボタン -->
+    <footer class="w-full max-w-md grid grid-cols-5 gap-2 my-2 lg:hidden">
+        <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow">◀</button>
+        <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow">▶</button>
+        <button onclick="rotatePiece()" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow">↻</button>
+        <button onclick="trySwitchToColdBathMobile()" id="mobile-transition-btn" class="bg-blue-600 active:bg-blue-500 py-3 rounded-xl glossy flex items-center justify-center text-xs font-black shadow text-white">💧移行</button>
+        <button onclick="dropPiece()" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow">▼</button>
+    </footer>
 
-    var inv=investment;
-    var cashNow=cash;
-    var data=[];
+    <!-- フッター簡易リセット（スマホ用） -->
+    <div class="block lg:hidden text-center mb-1">
+        <button onclick="resetGame()" class="text-xs text-slate-400 underline py-1 px-3">ゲームをリセット</button>
+    </div>
 
-    for(var age=start;age<=end;age++){
-      if(age===start) inv=inv*(1-crash/100);
-      inv=inv*(1+returnRate);
+    <!-- アイコン用SVG定義（非表示） -->
+    <svg style="display: none;">
+        <!-- 炎アイコン (サウナ) -->
+        <symbol id="icon-fire" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 23c-3.87 0-7-3.13-7-7 0-3.5 2.5-6.5 4-8.5 0 0 1.5 2 1.5 3.5 0-3 1.5-5.5 3-7.5 0 2 1.5 3.5 2.5 5.5 1 2 1 4 1 5.5 0 3.87-3.13 7-7 7z"/>
+        </symbol>
+        <!-- 水滴+アイコン (水風呂) -->
+        <symbol id="icon-water" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            <path fill="currentColor" d="M12 9v6M9 12h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </symbol>
+        <!-- ❓アイコン (お邪魔) -->
+        <symbol id="icon-jammer" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.02-.42 1.95-1.07 2.75z"/>
+        </symbol>
+        <!-- 葉っぱアイコン (ととのい) -->
+        <symbol id="icon-leaf" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M17 8C8 10 5.9 16.17 3.82 21.35L5.71 22l1-2.3A20.01 20.01 0 0 0 19 12c1.1-.03 2-.92 2-2.03 0-.95-.68-1.76-1.6-1.94L17 8zm-7 8c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+        </symbol>
+    </svg>
 
-      var spendBase=age<60 ? spendBefore60 : spendAfter60;
-      var spend=spendBase*Math.pow(1+inflation,age-start);
+    <script>
+        // 定数定義
+        const COLS = 8;
+        const ROWS = 12;
+        
+        // ブロック種類コード
+        const TYPE_EMPTY = 0;
+        const TYPE_SAUNA = 1;   // 赤・サウナ
+        const TYPE_COLD = 2;    // 青・水風呂
+        const TYPE_JAMMER = 3;  // 灰・お邪魔
+        const TYPE_TOTONO = 4;  // 緑・ととのい
 
-      var pension=0;
-      if(age>=pensionAge){
-        pension=adjustedPension*Math.pow(1+inflation,age-pensionAge);
-      }
+        // フェーズ
+        const PHASE_SAUNA = 1;
+        const PHASE_COLD = 2;
+        const PHASE_TOTONO = 3;
 
-      var need=Math.max(0,spend-pension);
-      var fromInv=Math.min(inv,need);
-      inv-=fromInv;
-      need-=fromInv;
+        // ゲーム状態
+        let board = Array(ROWS).fill(null).map(() => Array(COLS).fill(TYPE_EMPTY));
+        let score = 0;
+        let highScore = localStorage.getItem('totonos_highscore') || 0;
+        let currentPhase = PHASE_SAUNA;
+        let totovnoTurnsRemaining = 0; // とのといフェーズ残り配置回数 (3回)
+        let isGameOver = true;
+        let dropInterval = null;
+        let dropSpeed = 800; // ms
 
-      var fromCash=Math.min(cashNow,need);
-      cashNow-=fromCash;
-      need-=fromCash;
+        // 現在操作中のブロック組 {x, y, type1, type2, rotation}
+        // rotation: 0=縦(下がtype1,上がtype2), 1=横(左がtype2,右がtype1), etc.
+        let currentPiece = null;
+        let nextPiece = null;
 
-      data.push({
-        age:age,spend:spend,pension:pension,investment:inv,
-        cash:cashNow,total:inv+cashNow,shortfall:need
-      });
-    }
+        // DOM初期化
+        const boardEl = document.getElementById('board');
+        const scoreEl = document.getElementById('score');
+        const highscoreEl = document.getElementById('highscore');
+        const phaseBadgeEl = document.getElementById('phase-badge');
+        const phaseSubEl = document.getElementById('phase-sub');
+        const transitionBtnEl = document.getElementById('transition-btn');
+        const mobileTransitionBtnEl = document.getElementById('mobile-transition-btn');
+        const overlayEl = document.getElementById('overlay');
+        const overlayTitleEl = document.getElementById('overlay-title');
+        const overlayDescEl = document.getElementById('overlay-desc');
+        const startBtnEl = document.getElementById('start-btn');
+        const nextPreviewEl = document.getElementById('next-preview');
 
-    renderResults(data,factor,adjustedPension);
-  }catch(e){
-    alert("計算中にエラーが発生しました。入力値を確認してください。");
-  }
-}
+        highscoreEl.textContent = highScore;
+        initBoardDOM();
 
-function renderResults(data,factor,adjustedPension){
-  var at=function(age){for(var i=0;i<data.length;i++)if(data[i].age===age)return data[i];return null;};
-  var invZero=null,totalZero=null,shortfall=null;
-  for(var i=0;i<data.length;i++){
-    if(!invZero && data[i].investment<=0) invZero=data[i];
-    if(!totalZero && data[i].total<=0) totalZero=data[i];
-    if(!shortfall && data[i].shortfall>0) shortfall=data[i];
-  }
+        function initBoardDOM() {
+            boardEl.innerHTML = '';
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.id = `cell-${r}-${c}`;
+                    cell.className = 'w-full aspect-square rounded-md transition-all duration-150 flex items-center justify-center';
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
 
-  var html="";
-  html+='<div class="card"><h2>結果</h2><div class="metrics">';
-  [60,70,80,90].forEach(function(age){
-    var x=at(age);
-    if(x) html+='<div class="metric">'+age+'歳 総資産<strong>'+fmt(x.total)+'</strong></div>';
-  });
-  html+='<div class="metric">運用資産枯渇<strong>'+(invZero?invZero.age+"歳":"なし")+'</strong></div>';
-  html+='<div class="metric">総資産枯渇<strong>'+(totalZero?totalZero.age+"歳":"なし")+'</strong></div>';
-  html+='</div></div>';
+        function startGame() {
+            board = Array(ROWS).fill(null).map(() => Array(COLS).fill(TYPE_EMPTY));
+            score = 0;
+            currentPhase = PHASE_SAUNA;
+            totovnoTurnsRemaining = 0;
+            isGameOver = false;
+            scoreEl.textContent = score;
+            
+            overlayEl.classList.add('opacity-0', 'pointer-events-none');
+            
+            nextPiece = generateRandomPiece();
+            spawnNewPiece();
+            
+            if (dropInterval) clearInterval(dropInterval);
+            dropInterval = setInterval(gameLoop, dropSpeed);
+            updateUI();
+        }
 
-  html+='<div class="card"><h2>年金</h2><p>受給開始：<strong>'+document.getElementById("pensionAge").value+'歳</strong> ／ 自動調整率：<strong>'+((factor*100).toFixed(1))+'%</strong> ／ 開始時年金：<strong>'+fmt(adjustedPension)+'/年</strong></p></div>';
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(dropInterval);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('totonos_highscore', highScore);
+                highscoreEl.textContent = highScore;
+            }
+            overlayTitleEl.textContent = "GAME OVER";
+            overlayDescEl.textContent = `最終スコア: ${score}点`;
+            startBtnEl.textContent = "もういちどプレイ";
+            overlayEl.classList.remove('opacity-0', 'pointer-events-none');
+        }
 
-  html+='<div class="card"><h2>資産推移</h2><svg id="chart" viewBox="0 0 1000 330" preserveAspectRatio="none"></svg></div>';
+        // ブロック生成 (サウナ/水風呂フェーズは赤・青・灰。ととのいフェーズは緑のみ)
+        function generateRandomPiece() {
+            let types = [];
+            if (currentPhase === PHASE_TOTONO) {
+                types = [TYPE_TOTONO, TYPE_TOTONO];
+            } else {
+                types = [TYPE_SAUNA, TYPE_COLD, TYPE_JAMMER];
+            }
+            return {
+                type1: types[Math.floor(Math.random() * types.length)],
+                type2: types[Math.floor(Math.random() * types.length)],
+                x: Math.floor(COLS / 2) - 1,
+                y: 0,
+                rot: 0 // 0: 縦(下がtype1, 上がtype2), 1: 横(左がtype2, 右がtype1)
+            };
+        }
 
-  html+='<div class="card"><h2>暴落率別比較</h2><div class="scroll"><table><thead><tr><th>暴落率</th><th>60歳</th><th>70歳</th><th>80歳</th><th>90歳</th><th>総資産枯渇</th></tr></thead><tbody>';
-  [0,10,20,30,40,50].forEach(function(rate){
-    var d=simulateWithCrash(rate);
-    html+='<tr><td>-'+rate+'%</td>';
-    [60,70,80,90].forEach(function(age){
-      var x=null;for(var j=0;j<d.length;j++)if(d[j].age===age)x=d[j];
-      html+='<td>'+(x?fmt(x.total):"—")+'</td>';
-    });
-    var z=null;for(var k=0;k<d.length;k++)if(d[k].total<=0){z=d[k];break;}
-    html+='<td>'+(z?z.age+"歳":"なし")+'</td></tr>';
-  });
-  html+='</tbody></table></div></div>';
+        function spawnNewPiece() {
+            currentPiece = nextPiece;
+            nextPiece = generateRandomPiece();
+            updateNextPreview();
 
-  html+='<div class="card"><h2>年齢別推移</h2><div class="scroll"><table><thead><tr><th>年齢</th><th>生活費</th><th>年金</th><th>運用資産</th><th>現金</th><th>総資産</th></tr></thead><tbody>';
-  data.forEach(function(x){
-    html+='<tr><td>'+x.age+'</td><td>'+fmt(x.spend)+'</td><td>'+fmt(x.pension)+'</td><td>'+fmt(x.investment)+'</td><td>'+fmt(x.cash)+'</td><td>'+fmt(x.total)+'</td></tr>';
-  });
-  html+='</tbody></table></div></div>';
+            // 出現位置が既に埋まっている場合はゲームオーバー
+            if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot, currentPiece)) {
+                render();
+                gameOver();
+            }
+        }
 
-  html+='<div class="card note"><b>モデル上の注意</b><br>・指定した利回りを毎年一定とする簡易モデルです。<br>・暴落はFIRE開始直後に一度だけ発生します。<br>・税金、社会保険料、手数料、住宅購入、医療・介護費などは含みません。<br>・年金は65歳時点の見込額を基準に繰上げ/繰下げ率を反映し、受給開始後は設定したインフレ率で増えるモデルです。</div>';
+        function updateNextPreview() {
+            nextPreviewEl.innerHTML = '';
+            [nextPiece.type2, nextPiece.type1].forEach(type => {
+                const div = document.createElement('div');
+                div.className = `w-7 h-7 rounded flex items-center justify-center shadow ${getBlockClass(type)}`;
+                div.innerHTML = getBlockSvg(type);
+                nextPreviewEl.appendChild(div);
+            });
+        }
 
-  document.getElementById("results").innerHTML=html;
-  drawChart(data);
-}
+        function getBlockClass(type) {
+            switch(type) {
+                case TYPE_SAUNA: return 'block-red';
+                case TYPE_COLD: return 'block-blue';
+                case TYPE_JAMMER: return 'block-gray';
+                case TYPE_TOTONO: return 'block-green';
+                default: return 'bg-slate-900 border border-slate-800';
+            }
+        }
 
-function simulateWithCrash(crash){
-  var start=getNumber("start"),end=getNumber("end");
-  var inv=getNumber("investment"),cash=getNumber("cash");
-  var r=getNumber("returnRate")/100,inf=getNumber("inflation")/100;
-  var sb1=getNumber("spendBefore60"),sb2=getNumber("spendAfter60");
-  var pa=getNumber("pensionAge"),pb=getNumber("pensionBase");
-  var base=pb*pensionFactor(pa);
-  var out=[];
-  for(var age=start;age<=end;age++){
-    if(age===start) inv*=1-crash/100;
-    inv*=1+r;
-    var spend=(age<60?sb1:sb2)*Math.pow(1+inf,age-start);
-    var pension=age>=pa?base*Math.pow(1+inf,age-pa):0;
-    var need=Math.max(0,spend-pension);
-    var u=Math.min(inv,need);inv-=u;need-=u;
-    u=Math.min(cash,need);cash-=u;need-=u;
-    out.push({age:age,total:inv+cash,investment:inv,cash:cash,shortfall:need});
-  }
-  return out;
-}
+        function getBlockSvg(type) {
+            switch(type) {
+                case TYPE_SAUNA: return '<svg class="w-4 h-4 text-white icon-glow"><use href="#icon-fire"/></svg>';
+                case TYPE_COLD: return '<svg class="w-4 h-4 text-white icon-glow"><use href="#icon-water"/></svg>';
+                case TYPE_JAMMER: return '<svg class="w-4 h-4 text-white"><use href="#icon-jammer"/></svg>';
+                case TYPE_TOTONO: return '<svg class="w-4 h-4 text-white icon-glow"><use href="#icon-leaf"/></svg>';
+                default: return '';
+            }
+        }
 
-function drawChart(data){
-  var svg=document.getElementById("chart");
-  var W=1000,H=330,p=45;
-  var max=1;
-  for(var i=0;i<data.length;i++)max=Math.max(max,data[i].total);
-  var points="";
-  for(var j=0;j<data.length;j++){
-    var x=p+j*(W-2*p)/(data.length-1);
-    var y=H-p-(data[j].total/max)*(H-2*p);
-    points+=x+","+y+" ";
-  }
-  svg.innerHTML='<line x1="'+p+'" y1="'+(H-p)+'" x2="'+(W-p)+'" y2="'+(H-p)+'" stroke="#bbb"/>'+
-    '<line x1="'+p+'" y1="'+p+'" x2="'+p+'" y2="'+(H-p)+'" stroke="#bbb"/>'+
-    '<polyline points="'+points+'" fill="none" stroke="#222" stroke-width="3"/>'+
-    '<text x="'+p+'" y="20" font-size="14">総資産（万円）</text>'+
-    '<text x="'+p+'" y="'+(H-8)+'" font-size="12">'+data[0].age+'歳</text>'+
-    '<text x="'+(W-p-45)+'" y="'+(H-8)+'" font-size="12">'+data[data.length-1].age+'歳</text>';
-}
-</script>
+        // 座標計算用パーツブロック取得
+        function getPieceCoords(x, y, rot) {
+            if (rot === 0) {
+                // 縦: 下が1, 上が2
+                return [{x: x, y: y+1, type: currentPiece.type1}, {x: x, y: y, type: currentPiece.type2}];
+            } else {
+                // 横: 左が2, 右が1
+                return [{x: x+1, y: y, type: currentPiece.type1}, {x: x, y: y, type: currentPiece.type2}];
+            }
+        }
+
+        function isValidPosition(x, y, rot, piece) {
+            let coords;
+            if (rot === 0) {
+                coords = [{x: x, y: y+1, type: piece.type1}, {x: x, y: y, type: piece.type2}];
+            } else {
+                coords = [{x: x+1, y: y, type: piece.type1}, {x: x, y: y, type: piece.type2}];
+            }
+
+            for (let c of coords) {
+                if (c.x < 0 || c.x >= COLS || c.y < 0 || c.y >= ROWS) return false;
+                if (board[c.y][c.x] !== TYPE_EMPTY) return false;
+            }
+            return true;
+        }
+
+        // ゲームループ（1ステップ落下）
+        function gameLoop() {
+            if (isGameOver) return;
+            if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
+                currentPiece.y++;
+            } else {
+                lockPiece();
+            }
+            render();
+        }
+
+        // ブロック着地・固定
+        function lockPiece() {
+            let coords = currentPiece.rot === 0 ? 
+                [{x: currentPiece.x, y: currentPiece.y+1, type: currentPiece.type1}, {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type2}] :
+                [{x: currentPiece.x+1, y: currentPiece.y, type: currentPiece.type1}, {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type2}];
+
+            for (let c of coords) {
+                if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
+                    board[c.y][c.x] = c.type;
+                }
+            }
+
+            // 消去および連鎖処理の実行
+            processClearsAndGravity(() => {
+                // ととのいフェーズ中のカウント処理
+                if (currentPhase === PHASE_TOTONO) {
+                    totovnoTurnsRemaining--;
+                    if (totovnoTurnsRemaining <= 0) {
+                        currentPhase = PHASE_SAUNA;
+                        showFloatingMessage("サウナフェーズへ復帰！", window.innerWidth/2, 200, "text-red-400");
+                    }
+                }
+                
+                // 次のブロック生成、もしくはゲームオーバー判定
+                spawnNewPiece();
+                updateUI();
+            });
+        }
+
+        // 落下・消去・連鎖処理
+        function processClearsAndGravity(onComplete) {
+            let clearedAny = false;
+
+            // 判定と消去をカスケード（連鎖）で繰り返す
+            function stepChain() {
+                let currentCleared = false;
+
+                if (currentPhase === PHASE_SAUNA) {
+                    currentCleared = checkAndClearSauna();
+                } else if (currentPhase === PHASE_COLD) {
+                    currentCleared = checkAndClearColdBath();
+                } else if (currentPhase === PHASE_TOTONO) {
+                    currentCleared = checkAndClearTotono();
+                }
+
+                if (currentCleared) {
+                    clearedAny = true;
+                    applyGravity();
+                    render();
+                    setTimeout(stepChain, 300); // アロースムーズな連鎖遅延
+                } else {
+                    onComplete();
+                }
+            }
+            stepChain();
+        }
+
+        // ① サウナフェーズ消去判定: 上下左右連結した赤(SAUNA)が8個以上
+        function checkAndClearSauna() {
+            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let toClear = [];
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (board[r][c] === TYPE_SAUNA && !visited[r][c]) {
+                        let group = [];
+                        let queue = [{r, c}];
+                        visited[r][c] = true;
+
+                        while (queue.length > 0) {
+                            let curr = queue.shift();
+                            group.push(curr);
+
+                            let neighbors = [
+                                {r: curr.r-1, c: curr.c}, {r: curr.r+1, c: curr.c},
+                                {r: curr.r, c: curr.c-1}, {r: curr.r, c: curr.c+1}
+                            ];
+                            for (let n of neighbors) {
+                                if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
+                                    if (board[n.r][n.c] === TYPE_SAUNA && !visited[n.r][n.c]) {
+                                        visited[n.r][n.c] = true;
+                                        queue.push(n);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (group.length >= 8) {
+                            toClear.push(...group);
+                        }
+                    }
+                }
+            }
+
+            if (toClear.length > 0) {
+                for (let cell of toClear) {
+                    board[cell.r][cell.c] = TYPE_EMPTY;
+                }
+                score += toClear.length * 10;
+                scoreEl.textContent = score;
+                showFloatingMessage(`🔥 SAUNA CLEAR! +${toClear.length*10}`, window.innerWidth/2, 250, "text-red-400");
+                return true;
+            }
+            return false;
+        }
+
+        // ② 水風呂フェーズ消去判定: 横一列8マスすべてが青(COLD)
+        function checkAndClearColdBath() {
+            let clearedRows = 0;
+            for (let r = 0; r < ROWS; r++) {
+                let isFullCold = true;
+                for (let c = 0; c < COLS; c++) {
+                    if (board[r][c] !== TYPE_COLD) {
+                        isFullCold = false;
+                        break;
+                    }
+                }
+                if (isFullCold) {
+                    for (let c = 0; c < COLS; c++) {
+                        board[r][c] = TYPE_EMPTY;
+                    }
+                    clearedRows++;
+                }
+            }
+
+            if (clearedRows > 0) {
+                score += clearedRows * 100;
+                scoreEl.textContent = score;
+                showFloatingMessage(`💧 COLD BATH CLEAR! ととのいフェーズ突入！`, window.innerWidth/2, 250, "text-blue-400");
+                
+                // 水風呂行消去成功でととのいフェーズへ自動移行
+                currentPhase = PHASE_TOTONO;
+                totovnoTurnsRemaining = 3;
+                nextPiece = generateRandomPiece(); // 次を緑ブロック用に更新
+                updateUI();
+                return true;
+            }
+            return false;
+        }
+
+        // ③ ととのいフェーズ消去判定: 縦2×横2の正方形の緑(TOTONO)
+        function checkAndClearTotono() {
+            let clearedSquares = 0;
+            let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+
+            for (let r = 0; r < ROWS - 1; r++) {
+                for (let c = 0; c < COLS - 1; c++) {
+                    if (board[r][c] === TYPE_TOTONO &&
+                        board[r][c+1] === TYPE_TOTONO &&
+                        board[r+1][c] === TYPE_TOTONO &&
+                        board[r+1][c+1] === TYPE_TOTONO) {
+                        toClearMap[r][c] = true;
+                        toClearMap[r][c+1] = true;
+                        toClearMap[r+1][c] = true;
+                        toClearMap[r+1][c+1] = true;
+                        clearedSquares++;
+                    }
+                }
+            }
+
+            let clearedCount = 0;
+            if (clearedSquares > 0) {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        if (toClearMap[r][c]) {
+                            board[r][c] = TYPE_EMPTY;
+                            clearedCount++;
+                        }
+                    }
+                }
+                score += clearedSquares * 300;
+                scoreEl.textContent = score;
+                showFloatingMessage(`🌿 TOTONO! +${clearedSquares * 300}`, window.innerWidth/2, 250, "text-green-400");
+
+                // 消去した個数と同数の灰色（お邪魔）ブロックをランダム除去
+                removeJammerBlocks(clearedCount);
+                return true;
+            }
+            return false;
+        }
+
+        // お邪魔ブロック除去関数
+        function removeJammerBlocks(count) {
+            let jammers = [];
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (board[r][c] === TYPE_JAMMER) {
+                        jammers.push({r, c});
+                    }
+                }
+            }
+            // ランダムにシャッフル
+            jammers.sort(() => Math.random() - 0.5);
+            let removeCount = Math.min(count, jammers.length);
+            for (let i = 0; i < removeCount; i++) {
+                let j = jammers[i];
+                board[j.r][j.c] = TYPE_EMPTY;
+            }
+            if (removeCount > 0) {
+                showFloatingMessage(`✨ お邪魔ブロック ${removeCount}個浄化！`, window.innerWidth/2, 290, "text-amber-300");
+            }
+        }
+
+        // 重力落下処理
+        function applyGravity() {
+            for (let c = 0; c < COLS; c++) {
+                let writeRow = ROWS - 1;
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (board[r][c] !== TYPE_EMPTY) {
+                        let temp = board[r][c];
+                        board[r][c] = TYPE_EMPTY;
+                        board[writeRow][c] = temp;
+                        writeRow--;
+                    }
+                }
+            }
+        }
+
+        // プレイヤー操作
+        function movePiece(dx, dy) {
+            if (isGameOver) return;
+            if (isValidPosition(currentPiece.x + dx, currentPiece.y + dy, currentPiece.rot, currentPiece)) {
+                currentPiece.x += dx;
+                currentPiece.y += dy;
+                render();
+                return true;
+            }
+            return false;
+        }
+
+        function rotatePiece() {
+            if (isGameOver) return;
+            let newRot = (currentPiece.rot + 1) % 2;
+            // ウォールキック（壁際の回転補正）
+            let kicks = [0, -1, 1, -2, 2];
+            for (let k of kicks) {
+                if (isValidPosition(currentPiece.x + k, currentPiece.y, newRot, currentPiece)) {
+                    currentPiece.x += k;
+                    currentPiece.rot = newRot;
+                    render();
+                    break;
+                }
+            }
+        }
+
+        function dropPiece() {
+            if (isGameOver) return;
+            while (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
+                currentPiece.y++;
+            }
+            lockPiece();
+            render();
+        }
+
+        // サウナフェーズから水風呂フェーズへの手動移行ボタン
+        function trySwitchToColdBath() {
+            if (isGameOver || currentPhase !== PHASE_SAUNA) return;
+            currentPhase = PHASE_COLD;
+            showFloatingMessage("💧 水風呂フェーズへ移行！", window.innerWidth/2, 200, "text-blue-400");
+            updateUI();
+        }
+        function trySwitchToColdBathMobile() {
+            trySwitchToColdBath();
+        }
+
+        // 描画更新
+        function render() {
+            // 盤面の描画
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cellEl = document.getElementById(`cell-${r}-${c}`);
+                    cellEl.className = `w-full aspect-square rounded-md transition-all duration-150 flex items-center justify-center shadow-sm ${getBlockClass(board[r][c])}`;
+                    cellEl.innerHTML = getBlockSvg(board[r][c]);
+                }
+            }
+
+            // 操作中ピースの描画
+            if (currentPiece && !isGameOver) {
+                let coords = currentPiece.rot === 0 ? 
+                    [{x: currentPiece.x, y: currentPiece.y+1, type: currentPiece.type1}, {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type2}] :
+                    [{x: currentPiece.x+1, y: currentPiece.y, type: currentPiece.type1}, {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type2}];
+
+                for (let c of coords) {
+                    if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
+                        const cellEl = document.getElementById(`cell-${c.y}-${c.x}`);
+                        cellEl.className = `w-full aspect-square rounded-md flex items-center justify-center shadow-md ring-2 ring-white/80 ${getBlockClass(c.type)}`;
+                        cellEl.innerHTML = getBlockSvg(c.type);
+                    }
+                }
+            }
+        }
+
+        function updateUI() {
+            if (currentPhase === PHASE_SAUNA) {
+                phaseBadgeName = "サウナフェーズ";
+                phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-red-600 shadow-md";
+                phaseSubEl.textContent = "赤色8連結で消去";
+                transitionBtnEl.classList.remove('hidden');
+                mobileTransitionBtnEl.classList.remove('opacity-50', 'pointer-events-none');
+            } else if (currentPhase === PHASE_COLD) {
+                phaseBadgeName = "水風呂フェーズ";
+                phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-blue-600 shadow-md";
+                phaseSubEl.textContent = "青色横一列で消去";
+                transitionBtnEl.classList.add('hidden');
+                mobileTransitionBtnEl.classList.add('opacity-50', 'pointer-events-none');
+            } else if (currentPhase === PHASE_TOTONO) {
+                phaseBadgeName = "ととのいフェーズ";
+                phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-green-600 shadow-md";
+                phaseSubEl.textContent = `残り配置: ${totovnoTurnsRemaining}回`;
+                transitionBtnEl.classList.add('hidden');
+                mobileTransitionBtnEl.classList.add('opacity-50', 'pointer-events-none');
+            }
+            phaseBadgeEl.textContent = phaseBadgeName;
+        }
+
+        // 演出用フローティングメッセージ
+        function showFloatingMessage(text, x, y, colorClass) {
+            const el = document.createElement('div');
+            el.className = `absolute z-50 font-black text-sm sm:text-base drop-shadow-lg floating-text ${colorClass}`;
+            el.style.left = `${Math.min(window.innerWidth - 150, Math.max(20, x - 50))}px`;
+            el.style.top = `${y}px`;
+            el.textContent = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+
+        // キーボード操作リスナー
+        window.addEventListener('keydown', (e) => {
+            if (isGameOver) return;
+            if (e.key === 'ArrowLeft' || e.key === 'a') {
+                movePiece(-1, 0);
+            } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                movePiece(1, 0);
+            } else if (e.key === 'ArrowDown' || e.key === 's') {
+                movePiece(0, 1);
+            } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'x') {
+                rotatePiece();
+            } else if (e.key === ' ') {
+                dropPiece();
+            } else if (e.key === 'c' || e.key === 'Shift') {
+                trySwitchToColdBath();
+            }
+        });
+    </script>
 </body>
 </html>
