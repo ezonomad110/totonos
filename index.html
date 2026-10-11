@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOTONOS -トトノス- v1.3</title>
+    <title>TOTONOS -トトノス- v1.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
@@ -83,7 +84,7 @@
             🏠 ホーム
         </button>
         <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v1.3</span>
+            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v1.4</span>
         </h1>
         <button onclick="togglePause()" id="pause-btn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             ⏸ 一時停止
@@ -142,7 +143,7 @@
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 1.3</p>
+                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 1.4</p>
                     <p id="overlay-desc" class="text-xs text-slate-300 mb-5 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
                         ゲームスタート
@@ -527,10 +528,52 @@
             if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
                 currentPiece.y++;
             } else {
-                // 安全で確実な着地処理（ブロックが消える／止まらなくなる不具合を解消）
+                // ぷよぷよ風独立落下（半身落ち）の正しい判定処理：
+                // ツモ全体として下に落ちられない場合でも、片方だけに落下スペースがあれば独立して落とす
+                if (tryIndependentSettle()) {
+                    render();
+                    return;
+                }
                 lockPiece();
             }
             render();
+        }
+
+        // ぷよぷよの「半身落ち（独立落下）」：片方が引っかかり、もう片方が下に落ちる場合の自然落下処理
+        function tryIndependentSettle() {
+            const off = getOffset(currentPiece.rot);
+            let x1 = currentPiece.x;
+            let y1 = currentPiece.y;
+            let t1 = currentPiece.type1;
+
+            let x2 = currentPiece.x + off.dx;
+            let y2 = currentPiece.y + off.dy;
+            let t2 = currentPiece.type2;
+
+            let canFall1 = (y1 + 1 < ROWS && board[y1 + 1][x1] === TYPE_EMPTY);
+            let canFall2 = (y2 + 1 < ROWS && board[y2 + 1][x2] === TYPE_EMPTY);
+
+            // 片方だけが下に落ちるスペースがあり、もう一方が接地している場合
+            if (canFall1 && !canFall2) {
+                // 接地した方を安全に固定し、浮いている方を1マス落とす
+                board[y2][x2] = t2;
+                currentPiece.x = x1;
+                currentPiece.y = y1;
+                currentPiece.type1 = t1;
+                currentPiece.type2 = t1;
+                currentPiece.rot = 2;
+                return true;
+            } else if (!canFall1 && canFall2) {
+                board[y1][x1] = t1;
+                currentPiece.x = x2;
+                currentPiece.y = y2;
+                currentPiece.type1 = t2;
+                currentPiece.type2 = t2;
+                currentPiece.rot = 2;
+                return true;
+            }
+
+            return false;
         }
 
         function lockPiece() {
@@ -540,7 +583,6 @@
             let x2 = currentPiece.x + off.dx;
             let y2 = currentPiece.y + off.dy;
 
-            // 各ブロックを安全に配置（空きマスのみ、既存ブロックの上書きを完全に防止）
             if (y1 >= 0 && y1 < ROWS && x1 >= 0 && x1 < COLS && board[y1][x1] === TYPE_EMPTY) {
                 board[y1][x1] = currentPiece.type1;
             }
