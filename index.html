@@ -50,7 +50,7 @@
     <!-- メインコンテンツ領域 -->
     <main class="flex flex-col lg:flex-row items-center justify-center gap-4 w-full max-w-4xl flex-1">
         
-        <!-- 左側・あるいはスマホ上部：盤面 -->
+        <!-- 左側：盤面 -->
         <div class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-slate-700">
             <!-- グリッドボード (8列 × 12行) -->
             <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg" style="width: min(78vw, 280px); height: min(117vw, 420px);">
@@ -58,7 +58,7 @@
             </div>
 
             <!-- ゲームオーバー / スタートオーバーレイ -->
-            <div id="overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300">
+            <div id="overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-10">
                 <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
                 <p id="overlay-desc" class="text-sm text-slate-300 mb-6 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                 <button id="start-btn" onclick="startGame()" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110">
@@ -67,7 +67,7 @@
             </div>
         </div>
 
-        <!-- 右側・あるいはスマホ下部：ステータス＆コントロール -->
+        <!-- 右側：ステータス＆コントロール -->
         <div class="flex flex-row lg:flex-col justify-between items-center lg:items-stretch gap-3 w-full max-w-[280px] lg:max-w-[200px]">
             
             <!-- NEXT プレビュー -->
@@ -84,11 +84,7 @@
                 <div id="phase-badge" class="mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-red-600 shadow-md">
                     サウナフェーズ
                 </div>
-                <div id="phase-sub" class="text-[10px] text-slate-400 mt-1">残り配置: -</div>
-                <!-- サウナフェーズからの手動移行ボタン -->
-                <button id="transition-btn" onclick="trySwitchToColdBath()" class="mt-2 w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-lg glossy hidden transition active:scale-95 shadow">
-                    💧 水風呂へ移行
-                </button>
+                <div id="phase-sub" class="text-[10px] text-slate-400 mt-1">赤8個で水風呂へ</div>
             </div>
 
             <!-- スコア表示 -->
@@ -106,13 +102,12 @@
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン -->
-    <footer class="w-full max-w-md grid grid-cols-5 gap-2 my-2 lg:hidden">
-        <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow">◀</button>
-        <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow">▶</button>
-        <button onclick="rotatePiece()" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow">↻</button>
-        <button onclick="trySwitchToColdBathMobile()" id="mobile-transition-btn" class="bg-blue-600 active:bg-blue-500 py-3 rounded-xl glossy flex items-center justify-center text-xs font-black shadow text-white">💧移行</button>
-        <button onclick="dropPiece()" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow">▼</button>
+    <!-- スマートフォン用タッチ操作ボタン（回転、左右移動、ソフトドロップ） -->
+    <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-2 lg:hidden">
+        <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">◀</button>
+        <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▶</button>
+        <button onclick="rotatePieceClockwise()" class="bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">↻ 90°</button>
+        <button onclick="dropPiece()" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▼</button>
     </footer>
 
     <!-- フッター簡易リセット（スマホ用） -->
@@ -120,67 +115,56 @@
         <button onclick="resetGame()" class="text-xs text-slate-400 underline py-1 px-3">ゲームをリセット</button>
     </div>
 
-    <!-- アイコン用SVG定義（非表示） -->
+    <!-- アイコン用SVG定義 -->
     <svg style="display: none;">
-        <!-- 炎アイコン (サウナ) -->
         <symbol id="icon-fire" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 23c-3.87 0-7-3.13-7-7 0-3.5 2.5-6.5 4-8.5 0 0 1.5 2 1.5 3.5 0-3 1.5-5.5 3-7.5 0 2 1.5 3.5 2.5 5.5 1 2 1 4 1 5.5 0 3.87-3.13 7-7 7z"/>
         </symbol>
-        <!-- 水滴+アイコン (水風呂) -->
         <symbol id="icon-water" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
             <path fill="currentColor" d="M12 9v6M9 12h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
         </symbol>
-        <!-- ❓アイコン (お邪魔) -->
         <symbol id="icon-jammer" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.02-.42 1.95-1.07 2.75z"/>
         </symbol>
-        <!-- 葉っぱアイコン (ととのい) -->
         <symbol id="icon-leaf" viewBox="0 0 24 24">
             <path fill="currentColor" d="M17 8C8 10 5.9 16.17 3.82 21.35L5.71 22l1-2.3A20.01 20.01 0 0 0 19 12c1.1-.03 2-.92 2-2.03 0-.95-.68-1.76-1.6-1.94L17 8zm-7 8c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
         </symbol>
     </svg>
 
     <script>
-        // 定数定義
         const COLS = 8;
         const ROWS = 12;
         
-        // ブロック種類コード
         const TYPE_EMPTY = 0;
         const TYPE_SAUNA = 1;   // 赤・サウナ
         const TYPE_COLD = 2;    // 青・水風呂
         const TYPE_JAMMER = 3;  // 灰・お邪魔
         const TYPE_TOTONO = 4;  // 緑・ととのい
 
-        // フェーズ
         const PHASE_SAUNA = 1;
         const PHASE_COLD = 2;
         const PHASE_TOTONO = 3;
 
-        // ゲーム状態
         let board = Array(ROWS).fill(null).map(() => Array(COLS).fill(TYPE_EMPTY));
         let score = 0;
         let highScore = localStorage.getItem('totonos_highscore') || 0;
         let currentPhase = PHASE_SAUNA;
-        let totovnoTurnsRemaining = 0; // とのといフェーズ残り配置回数 (3回)
+        let totovnoTurnsRemaining = 0; 
         let isGameOver = true;
         let dropInterval = null;
-        let dropSpeed = 800; // ms
+        let dropSpeed = 800;
 
-        // 現在操作中のブロック組 {x, y, type1, type2, rotation}
-        // rotation: 0=縦(下がtype1,上がtype2), 1=横(左がtype2,右がtype1), etc.
+        // 操作中ブロック {x, y, type1, type2, rot}
+        // rot: 0=上がtype2/下がtype1, 1=右がtype2/左がtype1, 2=下がtype2/上がtype1, 3=左がtype2/右がtype1 (時計回り)
         let currentPiece = null;
         let nextPiece = null;
 
-        // DOM初期化
         const boardEl = document.getElementById('board');
         const scoreEl = document.getElementById('score');
         const highscoreEl = document.getElementById('highscore');
         const phaseBadgeEl = document.getElementById('phase-badge');
         const phaseSubEl = document.getElementById('phase-sub');
-        const transitionBtnEl = document.getElementById('transition-btn');
-        const mobileTransitionBtnEl = document.getElementById('mobile-transition-btn');
         const overlayEl = document.getElementById('overlay');
         const overlayTitleEl = document.getElementById('overlay-title');
         const overlayDescEl = document.getElementById('overlay-desc');
@@ -220,6 +204,15 @@
             updateUI();
         }
 
+        function resetGame() {
+            if (dropInterval) clearInterval(dropInterval);
+            isGameOver = true;
+            overlayTitleEl.textContent = "TOTONOS";
+            overlayDescEl.textContent = "サウナ・水風呂・ととのいを巡る落ちものパズル";
+            startBtnEl.textContent = "ゲームスタート";
+            overlayEl.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
         function gameOver() {
             isGameOver = true;
             clearInterval(dropInterval);
@@ -234,7 +227,6 @@
             overlayEl.classList.remove('opacity-0', 'pointer-events-none');
         }
 
-        // ブロック生成 (サウナ/水風呂フェーズは赤・青・灰。ととのいフェーズは緑のみ)
         function generateRandomPiece() {
             let types = [];
             if (currentPhase === PHASE_TOTONO) {
@@ -243,11 +235,11 @@
                 types = [TYPE_SAUNA, TYPE_COLD, TYPE_JAMMER];
             }
             return {
-                type1: types[Math.floor(Math.random() * types.length)],
-                type2: types[Math.floor(Math.random() * types.length)],
+                type1: types[Math.floor(Math.random() * types.length)], // 軸ブロック
+                type2: types[Math.floor(Math.random() * types.length)], // 回転ブロック
                 x: Math.floor(COLS / 2) - 1,
                 y: 0,
-                rot: 0 // 0: 縦(下がtype1, 上がtype2), 1: 横(左がtype2, 右がtype1)
+                rot: 0
             };
         }
 
@@ -256,7 +248,6 @@
             nextPiece = generateRandomPiece();
             updateNextPreview();
 
-            // 出現位置が既に埋まっている場合はゲームオーバー
             if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot, currentPiece)) {
                 render();
                 gameOver();
@@ -265,6 +256,7 @@
 
         function updateNextPreview() {
             nextPreviewEl.innerHTML = '';
+            // 縦並びプレビュー
             [nextPiece.type2, nextPiece.type1].forEach(type => {
                 const div = document.createElement('div');
                 div.className = `w-7 h-7 rounded flex items-center justify-center shadow ${getBlockClass(type)}`;
@@ -293,33 +285,32 @@
             }
         }
 
-        // 座標計算用パーツブロック取得
-        function getPieceCoords(x, y, rot) {
-            if (rot === 0) {
-                // 縦: 下が1, 上が2
-                return [{x: x, y: y+1, type: currentPiece.type1}, {x: x, y: y, type: currentPiece.type2}];
-            } else {
-                // 横: 左が2, 右が1
-                return [{x: x+1, y: y, type: currentPiece.type1}, {x: x, y: y, type: currentPiece.type2}];
+        // 回転のオフセット取得 (時計回り90°刻み)
+        function getOffset(rot) {
+            switch(rot) {
+                case 0: return {dx: 0, dy: -1}; // 上
+                case 1: return {dx: 1, dy: 0};  // 右
+                case 2: return {dx: 0, dy: 1};  // 下
+                case 3: return {dx: -1, dy: 0}; // 左
             }
         }
 
         function isValidPosition(x, y, rot, piece) {
-            let coords;
-            if (rot === 0) {
-                coords = [{x: x, y: y+1, type: piece.type1}, {x: x, y: y, type: piece.type2}];
-            } else {
-                coords = [{x: x+1, y: y, type: piece.type1}, {x: x, y: y, type: piece.type2}];
-            }
+            // type1 は (x, y)
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+            if (board[y][x] !== TYPE_EMPTY) return false;
 
-            for (let c of coords) {
-                if (c.x < 0 || c.x >= COLS || c.y < 0 || c.y >= ROWS) return false;
-                if (board[c.y][c.x] !== TYPE_EMPTY) return false;
-            }
+            // type2 は (x + offset.dx, y + offset.dy)
+            const off = getOffset(rot);
+            const x2 = x + off.dx;
+            const y2 = y + off.dy;
+
+            if (x2 < 0 || x2 >= COLS || y2 < 0 || y2 >= ROWS) return false;
+            if (board[y2][x2] !== TYPE_EMPTY) return false;
+
             return true;
         }
 
-        // ゲームループ（1ステップ落下）
         function gameLoop() {
             if (isGameOver) return;
             if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
@@ -330,21 +321,12 @@
             render();
         }
 
-        // ブロック着地・固定
         function lockPiece() {
-            let coords = currentPiece.rot === 0 ? 
-                [{x: currentPiece.x, y: currentPiece.y+1, type: currentPiece.type1}, {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type2}] :
-                [{x: currentPiece.x+1, y: currentPiece.y, type: currentPiece.type1}, {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type2}];
+            const off = getOffset(currentPiece.rot);
+            board[currentPiece.y][currentPiece.x] = currentPiece.type1;
+            board[currentPiece.y + off.dy][currentPiece.x + off.dx] = currentPiece.type2;
 
-            for (let c of coords) {
-                if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
-                    board[c.y][c.x] = c.type;
-                }
-            }
-
-            // 消去および連鎖処理の実行
             processClearsAndGravity(() => {
-                // ととのいフェーズ中のカウント処理
                 if (currentPhase === PHASE_TOTONO) {
                     totovnoTurnsRemaining--;
                     if (totovnoTurnsRemaining <= 0) {
@@ -352,18 +334,12 @@
                         showFloatingMessage("サウナフェーズへ復帰！", window.innerWidth/2, 200, "text-red-400");
                     }
                 }
-                
-                // 次のブロック生成、もしくはゲームオーバー判定
                 spawnNewPiece();
                 updateUI();
             });
         }
 
-        // 落下・消去・連鎖処理
         function processClearsAndGravity(onComplete) {
-            let clearedAny = false;
-
-            // 判定と消去をカスケード（連鎖）で繰り返す
             function stepChain() {
                 let currentCleared = false;
 
@@ -376,10 +352,9 @@
                 }
 
                 if (currentCleared) {
-                    clearedAny = true;
                     applyGravity();
                     render();
-                    setTimeout(stepChain, 300); // アロースムーズな連鎖遅延
+                    setTimeout(stepChain, 300);
                 } else {
                     onComplete();
                 }
@@ -387,7 +362,7 @@
             stepChain();
         }
 
-        // ① サウナフェーズ消去判定: 上下左右連結した赤(SAUNA)が8個以上
+        // ① サウナフェーズ: 赤8個以上連結で消去 ➔ 水風呂フェーズへ自動移行
         function checkAndClearSauna() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
             let toClear = [];
@@ -430,13 +405,17 @@
                 }
                 score += toClear.length * 10;
                 scoreEl.textContent = score;
-                showFloatingMessage(`🔥 SAUNA CLEAR! +${toClear.length*10}`, window.innerWidth/2, 250, "text-red-400");
+                showFloatingMessage(`🔥 SAUNA CLEAR! 💧水風呂へ突入！`, window.innerWidth/2, 250, "text-blue-400");
+                
+                // 消去成功で自動的に水風呂フェーズへ移行
+                currentPhase = PHASE_COLD;
+                updateUI();
                 return true;
             }
             return false;
         }
 
-        // ② 水風呂フェーズ消去判定: 横一列8マスすべてが青(COLD)
+        // ② 水風呂フェーズ: 横一列すべて青で消去 ➔ ととのいフェーズへ移行
         function checkAndClearColdBath() {
             let clearedRows = 0;
             for (let r = 0; r < ROWS; r++) {
@@ -458,19 +437,18 @@
             if (clearedRows > 0) {
                 score += clearedRows * 100;
                 scoreEl.textContent = score;
-                showFloatingMessage(`💧 COLD BATH CLEAR! ととのいフェーズ突入！`, window.innerWidth/2, 250, "text-blue-400");
+                showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
                 
-                // 水風呂行消去成功でととのいフェーズへ自動移行
                 currentPhase = PHASE_TOTONO;
                 totovnoTurnsRemaining = 3;
-                nextPiece = generateRandomPiece(); // 次を緑ブロック用に更新
+                nextPiece = generateRandomPiece();
                 updateUI();
                 return true;
             }
             return false;
         }
 
-        // ③ ととのいフェーズ消去判定: 縦2×横2の正方形の緑(TOTONO)
+        // ③ ととのいフェーズ: 2×2緑で消去
         function checkAndClearTotono() {
             let clearedSquares = 0;
             let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
@@ -504,14 +482,12 @@
                 scoreEl.textContent = score;
                 showFloatingMessage(`🌿 TOTONO! +${clearedSquares * 300}`, window.innerWidth/2, 250, "text-green-400");
 
-                // 消去した個数と同数の灰色（お邪魔）ブロックをランダム除去
                 removeJammerBlocks(clearedCount);
                 return true;
             }
             return false;
         }
 
-        // お邪魔ブロック除去関数
         function removeJammerBlocks(count) {
             let jammers = [];
             for (let r = 0; r < ROWS; r++) {
@@ -521,7 +497,6 @@
                     }
                 }
             }
-            // ランダムにシャッフル
             jammers.sort(() => Math.random() - 0.5);
             let removeCount = Math.min(count, jammers.length);
             for (let i = 0; i < removeCount; i++) {
@@ -529,11 +504,10 @@
                 board[j.r][j.c] = TYPE_EMPTY;
             }
             if (removeCount > 0) {
-                showFloatingMessage(`✨ お邪魔ブロック ${removeCount}個浄化！`, window.innerWidth/2, 290, "text-amber-300");
+                showFloatingMessage(`✨ お邪魔ブロック ${removeCount}個消去！`, window.innerWidth/2, 290, "text-amber-300");
             }
         }
 
-        // 重力落下処理
         function applyGravity() {
             for (let c = 0; c < COLS; c++) {
                 let writeRow = ROWS - 1;
@@ -548,7 +522,6 @@
             }
         }
 
-        // プレイヤー操作
         function movePiece(dx, dy) {
             if (isGameOver) return;
             if (isValidPosition(currentPiece.x + dx, currentPiece.y + dy, currentPiece.rot, currentPiece)) {
@@ -560,15 +533,15 @@
             return false;
         }
 
-        function rotatePiece() {
+        // 右に90°回転（時計回り）
+        function rotatePieceClockwise() {
             if (isGameOver) return;
-            let newRot = (currentPiece.rot + 1) % 2;
-            // ウォールキック（壁際の回転補正）
+            let nextRot = (currentPiece.rot + 1) % 4;
             let kicks = [0, -1, 1, -2, 2];
             for (let k of kicks) {
-                if (isValidPosition(currentPiece.x + k, currentPiece.y, newRot, currentPiece)) {
+                if (isValidPosition(currentPiece.x + k, currentPiece.y, nextRot, currentPiece)) {
                     currentPiece.x += k;
-                    currentPiece.rot = newRot;
+                    currentPiece.rot = nextRot;
                     render();
                     break;
                 }
@@ -584,20 +557,7 @@
             render();
         }
 
-        // サウナフェーズから水風呂フェーズへの手動移行ボタン
-        function trySwitchToColdBath() {
-            if (isGameOver || currentPhase !== PHASE_SAUNA) return;
-            currentPhase = PHASE_COLD;
-            showFloatingMessage("💧 水風呂フェーズへ移行！", window.innerWidth/2, 200, "text-blue-400");
-            updateUI();
-        }
-        function trySwitchToColdBathMobile() {
-            trySwitchToColdBath();
-        }
-
-        // 描画更新
         function render() {
-            // 盤面の描画
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     const cellEl = document.getElementById(`cell-${r}-${c}`);
@@ -606,11 +566,12 @@
                 }
             }
 
-            // 操作中ピースの描画
             if (currentPiece && !isGameOver) {
-                let coords = currentPiece.rot === 0 ? 
-                    [{x: currentPiece.x, y: currentPiece.y+1, type: currentPiece.type1}, {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type2}] :
-                    [{x: currentPiece.x+1, y: currentPiece.y, type: currentPiece.type1}, {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type2}];
+                const off = getOffset(currentPiece.rot);
+                const coords = [
+                    {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type1},
+                    {x: currentPiece.x + off.dx, y: currentPiece.y + off.dy, type: currentPiece.type2}
+                ];
 
                 for (let c of coords) {
                     if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
@@ -623,29 +584,23 @@
         }
 
         function updateUI() {
+            let phaseBadgeName = "";
             if (currentPhase === PHASE_SAUNA) {
                 phaseBadgeName = "サウナフェーズ";
                 phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-red-600 shadow-md";
-                phaseSubEl.textContent = "赤色8連結で消去";
-                transitionBtnEl.classList.remove('hidden');
-                mobileTransitionBtnEl.classList.remove('opacity-50', 'pointer-events-none');
+                phaseSubEl.textContent = "赤8個連結で水風呂へ";
             } else if (currentPhase === PHASE_COLD) {
                 phaseBadgeName = "水風呂フェーズ";
                 phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-blue-600 shadow-md";
-                phaseSubEl.textContent = "青色横一列で消去";
-                transitionBtnEl.classList.add('hidden');
-                mobileTransitionBtnEl.classList.add('opacity-50', 'pointer-events-none');
+                phaseSubEl.textContent = "青1列完成でととのいへ";
             } else if (currentPhase === PHASE_TOTONO) {
                 phaseBadgeName = "ととのいフェーズ";
                 phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-green-600 shadow-md";
                 phaseSubEl.textContent = `残り配置: ${totovnoTurnsRemaining}回`;
-                transitionBtnEl.classList.add('hidden');
-                mobileTransitionBtnEl.classList.add('opacity-50', 'pointer-events-none');
             }
             phaseBadgeEl.textContent = phaseBadgeName;
         }
 
-        // 演出用フローティングメッセージ
         function showFloatingMessage(text, x, y, colorClass) {
             const el = document.createElement('div');
             el.className = `absolute z-50 font-black text-sm sm:text-base drop-shadow-lg floating-text ${colorClass}`;
@@ -656,7 +611,6 @@
             setTimeout(() => el.remove(), 800);
         }
 
-        // キーボード操作リスナー
         window.addEventListener('keydown', (e) => {
             if (isGameOver) return;
             if (e.key === 'ArrowLeft' || e.key === 'a') {
@@ -666,11 +620,9 @@
             } else if (e.key === 'ArrowDown' || e.key === 's') {
                 movePiece(0, 1);
             } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'x') {
-                rotatePiece();
+                rotatePieceClockwise();
             } else if (e.key === ' ') {
                 dropPiece();
-            } else if (e.key === 'c' || e.key === 'Shift') {
-                trySwitchToColdBath();
             }
         });
     </script>
