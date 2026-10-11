@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -38,7 +37,6 @@
             pointer-events: none;
         }
 
-        /* 点滅しながらゆっくり消える演出 */
         @keyframes blink-fade {
             0% { transform: scale(1); filter: brightness(1); opacity: 1; }
             25% { transform: scale(1.1); filter: brightness(3); opacity: 0.3; }
@@ -48,6 +46,23 @@
         }
         .clearing-anim {
             animation: blink-fade 0.6s ease-in-out forwards;
+        }
+
+        @keyframes totono-banner {
+            0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+            20% { transform: scale(1.1) rotate(2deg); opacity: 1; }
+            40% { transform: scale(1) rotate(0deg); opacity: 1; }
+            80% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.2) rotate(5deg); opacity: 0; }
+        }
+        .totono-banner-anim {
+            animation: totono-banner 1.2s ease-in-out forwards;
+            pointer-events: none;
+        }
+
+        /* 落下アニメーション用遷移 */
+        .fall-transition {
+            transition: transform 0.25s ease-in;
         }
     </style>
 </head>
@@ -95,22 +110,43 @@
         <!-- 盤面コンテナ (サイズ固定) -->
         <div id="board-container" class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-red-500 transition-all duration-300" style="width: calc(min(82vw, 280px) + 16px); height: calc(min(123vw, 420px) + 16px);">
             <!-- グリッドボード (8列 × 12行) -->
-            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg w-full h-full">
+            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg w-full h-full relative">
                 <!-- JSで動的生成 -->
             </div>
 
             <!-- ゲームオーバー / スタートオーバーレイ -->
             <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-10 m-2">
-                <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                <p id="overlay-desc" class="text-sm text-slate-300 mb-6 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
-                <button id="start-btn" onclick="startGame()" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110">
-                    ゲームスタート
-                </button>
+                
+                <!-- スタート画面メインコンテンツ -->
+                <div id="menu-main" class="flex flex-col items-center justify-center w-full">
+                    <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
+                    <p id="overlay-desc" class="text-sm text-slate-300 mb-6 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
+                    <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
+                        ゲームスタート
+                    </button>
+                    <button onclick="showRules()" class="w-full max-w-[200px] py-2.5 bg-slate-700 hover:bg-slate-600 font-bold rounded-xl text-sm glossy active:scale-95 transition shadow text-slate-200">
+                        ルール
+                    </button>
+                </div>
+
+                <!-- ルール説明画面 -->
+                <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-2">
+                    <h3 class="text-xl font-black text-amber-400 mb-1">遊び方ルール</h3>
+                    <div class="text-xs text-slate-300 space-y-2 overflow-y-auto max-h-[220px] px-1 text-left w-full bg-slate-900/80 p-2 rounded-lg border border-slate-700">
+                        <p><strong class="text-red-400">🔥 サウナフェーズ:</strong> 赤ブロックが上下左右に8個以上繋がると消去され、水風呂フェーズへ突入！</p>
+                        <p><strong class="text-blue-400">💧 水風呂フェーズ:</strong> 横一列が青ブロックで埋まると消去。上下に連続する青ブロックも一緒に巻き込んで消え、ととのいフェーズへ！</p>
+                        <p><strong class="text-green-400">🌿 ととのいフェーズ:</strong> 緑ブロックを縦2×横2（4個）の正方形に組んで消すと、画面上の「雑念ブロック」が全て浄化され、一気にサウナフェーズへ復帰！</p>
+                    </div>
+                    <button onclick="hideRules()" class="mt-2 w-full max-w-[180px] py-2 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white">
+                        戻る
+                    </button>
+                </div>
+
             </div>
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン（ソフトドロップ対応） -->
+    <!-- スマートフォン用タッチ操作ボタン -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-2">
         <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">◀</button>
         <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▶</button>
@@ -149,7 +185,7 @@
         const TYPE_EMPTY = 0;
         const TYPE_SAUNA = 1;
         const TYPE_COLD = 2;
-        const TYPE_JAMMER = 3;
+        const TYPE_JAMMER = 3;  // 雑念ブロック
         const TYPE_TOTONO = 4;
 
         const PHASE_SAUNA = 1;
@@ -182,6 +218,8 @@
         const overlayTitleEl = document.getElementById('overlay-title');
         const overlayDescEl = document.getElementById('overlay-desc');
         const startBtnEl = document.getElementById('start-btn');
+        const menuMainEl = document.getElementById('menu-main');
+        const menuRulesEl = document.getElementById('menu-rules');
         const nextPreviewEl = document.getElementById('next-preview');
 
         highscoreEl.textContent = highScore;
@@ -197,6 +235,16 @@
                     boardEl.appendChild(cell);
                 }
             }
+        }
+
+        function showRules() {
+            menuMainEl.classList.add('hidden');
+            menuRulesEl.classList.remove('hidden');
+        }
+
+        function hideRules() {
+            menuRulesEl.classList.add('hidden');
+            menuMainEl.classList.remove('hidden');
         }
 
         function startGame() {
@@ -237,6 +285,8 @@
         function resetGame() {
             if (dropInterval) clearInterval(dropInterval);
             isGameOver = true;
+            menuMainEl.classList.remove('hidden');
+            menuRulesEl.classList.add('hidden');
             overlayTitleEl.textContent = "TOTONOS";
             overlayDescEl.textContent = "サウナ・水風呂・ととのいを巡る落ちものパズル";
             startBtnEl.textContent = "ゲームスタート";
@@ -251,6 +301,8 @@
                 localStorage.setItem('totonos_highscore', highScore);
                 highscoreEl.textContent = highScore;
             }
+            menuMainEl.classList.remove('hidden');
+            menuRulesEl.classList.add('hidden');
             overlayTitleEl.textContent = "GAME OVER";
             overlayDescEl.textContent = `最終スコア: ${score}点`;
             startBtnEl.textContent = "もういちどプレイ";
@@ -395,7 +447,6 @@
                         if (cellEl) cellEl.classList.add('clearing-anim');
                     }
 
-                    // さらにゆっくり点滅・消去するようディレイを600msに調整
                     setTimeout(() => {
                         for (let cell of clearedCoords) {
                             board[cell.r][cell.c] = TYPE_EMPTY;
@@ -408,9 +459,9 @@
                             saunaClearCount++;
                             currentPhase = PHASE_COLD;
                             updateUI();
-                            applyGravity();
-                            render();
-                            onComplete();
+                            applyGravityWithAnimation(() => {
+                                setTimeout(stepChain, 300);
+                            });
                             return;
                         } else if (actionType === 'COLD') {
                             score += clearedCoords.length * 20;
@@ -420,13 +471,14 @@
                             totovnoTurnsRemaining = 3;
                             nextPiece = generateRandomPiece();
                             updateUI();
-                            applyGravity();
-                            render();
-                            onComplete();
+                            applyGravityWithAnimation(() => {
+                                setTimeout(stepChain, 300);
+                            });
                             return;
                         } else if (actionType === 'TOTONO') {
                             score += (clearedCoords.length / 4) * 300;
                             scoreEl.textContent = score;
+                            showTotonottaBanner();
                             showFloatingMessage(`🌿 TOTONO! 正方形成立！`, window.innerWidth/2, 250, "text-green-400");
                             removeAllJammers();
                             saunaClearCount = 0;
@@ -434,21 +486,89 @@
                             totovnoTurnsRemaining = 0;
                             nextPiece = generateRandomPiece();
                             updateUI();
-                            applyGravity();
-                            render();
-                            onComplete();
+                            applyGravityWithAnimation(() => {
+                                setTimeout(stepChain, 300);
+                            });
                             return;
                         }
-
-                        applyGravity();
-                        render();
-                        setTimeout(stepChain, 300);
                     }, 600);
                 } else {
                     onComplete();
                 }
             }
             stepChain();
+        }
+
+        // 自然落下を滑らかに見せるアニメーション処理
+        function applyGravityWithAnimation(callback) {
+            let fallMap = []; // 各列ごとの移動情報を計算
+            let maxFallSteps = 0;
+
+            for (let c = 0; c < COLS; c++) {
+                let writeRow = ROWS - 1;
+                let colItems = [];
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (board[r][c] !== TYPE_EMPTY) {
+                        colItems.push({ fromR: r, toR: writeRow, type: board[r][c] });
+                        writeRow--;
+                    }
+                }
+
+                // 盤面を一度空にして落下先を設定
+                for (let r = 0; r < ROWS; r++) {
+                    board[r][c] = TYPE_EMPTY;
+                }
+
+                colItems.forEach(item => {
+                    board[item.toR][c] = item.type;
+                    let diff = item.toR - item.fromR;
+                    if (diff > 0) {
+                        if (diff > maxFallSteps) maxFallSteps = diff;
+                        fallMap.push({ c, fromR: item.fromR, toR: item.toR, type: item.type });
+                    }
+                });
+            }
+
+            if (maxFallSteps === 0) {
+                render();
+                if (callback) callback();
+                return;
+            }
+
+            // 落下中のビジュアル演出（DOMを動かして滑らかに落とす）
+            render();
+            fallMap.forEach(item => {
+                let cellEl = document.getElementById(`cell-${item.toR}-${item.c}`);
+                if (cellEl) {
+                    let distance = (item.toR - item.fromR) * 100; // %換算の簡易ズレ
+                    cellEl.style.transform = `translateY(-${distance}%)`;
+                    cellEl.style.transition = 'none';
+                }
+            });
+
+            // 次のフレームでクラスをつけてアニメーション発動
+            requestAnimationFrame(() => {
+                fallMap.forEach(item => {
+                    let cellEl = document.getElementById(`cell-${item.toR}-${item.c}`);
+                    if (cellEl) {
+                        cellEl.style.transition = 'transform 0.25s ease-in';
+                        cellEl.style.transform = 'translateY(0)';
+                    }
+                });
+
+                setTimeout(() => {
+                    render(); // 最終的な通常の描画にリセット
+                    if (callback) callback();
+                }, 260);
+            });
+        }
+
+        function showTotonottaBanner() {
+            const banner = document.createElement('div');
+            banner.className = 'absolute inset-0 flex items-center justify-center z-40 pointer-events-none';
+            banner.innerHTML = `<div class="text-3xl sm:text-4xl font-black text-green-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] bg-black/60 px-6 py-3 rounded-2xl border-4 border-green-400 totono-banner-anim">ととのったー！</div>`;
+            boardContainerEl.appendChild(banner);
+            setTimeout(() => banner.remove(), 1200);
         }
 
         function getSaunaClearCoords() {
@@ -573,21 +693,7 @@
                 }
             }
             if (removed > 0) {
-                showFloatingMessage(`✨ お邪魔ブロック全 ${removed}個浄化！`, window.innerWidth/2, 290, "text-amber-300");
-            }
-        }
-
-        function applyGravity() {
-            for (let c = 0; c < COLS; c++) {
-                let writeRow = ROWS - 1;
-                for (let r = ROWS - 1; r >= 0; r--) {
-                    if (board[r][c] !== TYPE_EMPTY) {
-                        let temp = board[r][c];
-                        board[r][c] = TYPE_EMPTY;
-                        board[writeRow][c] = temp;
-                        writeRow--;
-                    }
-                }
+                showFloatingMessage(`✨ 雑念ブロック全 ${removed}個浄化！`, window.innerWidth/2, 290, "text-amber-300");
             }
         }
 
@@ -621,6 +727,8 @@
                 for (let c = 0; c < COLS; c++) {
                     const cellEl = document.getElementById(`cell-${r}-${c}`);
                     cellEl.className = `w-full aspect-square rounded-md transition-all duration-150 flex items-center justify-center shadow-sm ${getBlockClass(board[r][c])}`;
+                    cellEl.style.transform = '';
+                    cellEl.style.transition = '';
                     cellEl.innerHTML = getBlockSvg(board[r][c]);
                 }
             }
@@ -700,4 +808,3 @@
     </script>
 </body>
 </html>
-
