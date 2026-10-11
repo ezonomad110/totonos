@@ -43,7 +43,7 @@
     <!-- ヘッダータイトル -->
     <header class="text-center my-1">
         <h1 class="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-xs sm:text-sm font-bold text-slate-300">-トトノス-</span>
+            TOTONOS <span class="text-xs sm:text-sm font-bold text-slate-300">-トトノス- v1.1</span>
         </h1>
     </header>
 
@@ -145,7 +145,8 @@
         let score = 0;
         let highScore = localStorage.getItem('totonos_highscore') || 0;
         let currentPhase = PHASE_SAUNA;
-        let totovnoTurnsRemaining = 0; 
+        let saunaClearCount = 0; // 1周目のサウナ消去カウンター
+        let totovnoTurnsRemaining = 0; // ととのいフェーズ残り配置回数 (最大3回)
         let isGameOver = true;
         let dropInterval = null;
         let dropSpeed = 800;
@@ -185,6 +186,7 @@
             board = Array(ROWS).fill(null).map(() => Array(COLS).fill(TYPE_EMPTY));
             score = 0;
             currentPhase = PHASE_SAUNA;
+            saunaClearCount = 0;
             totovnoTurnsRemaining = 0;
             isGameOver = false;
             scoreEl.textContent = score;
@@ -234,7 +236,7 @@
                 type2: types[Math.floor(Math.random() * types.length)],
                 x: Math.floor(COLS / 2) - 1,
                 y: 0,
-                rot: 0
+                rot: 2
             };
         }
 
@@ -243,10 +245,9 @@
             nextPiece = generateRandomPiece();
             currentPiece.x = Math.floor(COLS / 2) - 1;
             currentPiece.y = 0;
-            currentPiece.rot = 2; // 初期状態を下に展開（y=0, y=1が盤面内に入るように）
+            currentPiece.rot = 2;
 
             if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot, currentPiece)) {
-                // 万が一安全でない場合はy=1でトライ
                 currentPiece.y = 1;
                 if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot, currentPiece)) {
                     render();
@@ -326,9 +327,11 @@
             board[currentPiece.y + off.dy][currentPiece.x + off.dx] = currentPiece.type2;
 
             processClearsAndGravity(() => {
+                // ととのいフェーズ中の配置ターン数管理
                 if (currentPhase === PHASE_TOTONO) {
                     totovnoTurnsRemaining--;
                     if (totovnoTurnsRemaining <= 0) {
+                        // 3回配置完了したらサウナフェーズへ復帰
                         currentPhase = PHASE_SAUNA;
                         showFloatingMessage("サウナフェーズへ復帰！", window.innerWidth/2, 200, "text-red-400");
                     }
@@ -361,6 +364,7 @@
             stepChain();
         }
 
+        // ① サウナフェーズ: 赤8個以上連結で消去
         function checkAndClearSauna() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
             let toClear = [];
@@ -405,6 +409,7 @@
                 scoreEl.textContent = score;
                 showFloatingMessage(`🔥 SAUNA CLEAR! 💧水風呂へ突入！`, window.innerWidth/2, 250, "text-blue-400");
                 
+                saunaClearCount++;
                 currentPhase = PHASE_COLD;
                 updateUI();
                 return true;
@@ -412,8 +417,9 @@
             return false;
         }
 
+        // ② 水風呂フェーズ: 横1列8マスすべて青 ＋ 上下連続する水風呂ブロックも巻き込んで消去
         function checkAndClearColdBath() {
-            let clearedRows = 0;
+            let fullColdRows = [];
             for (let r = 0; r < ROWS; r++) {
                 let isFullCold = true;
                 for (let c = 0; c < COLS; c++) {
@@ -423,18 +429,48 @@
                     }
                 }
                 if (isFullCold) {
-                    for (let c = 0; c < COLS; c++) {
-                        board[r][c] = TYPE_EMPTY;
-                    }
-                    clearedRows++;
+                    fullColdRows.push(r);
                 }
             }
 
-            if (clearedRows > 0) {
-                score += clearedRows * 100;
+            if (fullColdRows.length > 0) {
+                let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+
+                // 横一列のマークおよび上下連続する水風呂ブロックの検出
+                for (let r of fullColdRows) {
+                    for (let c = 0; c < COLS; c++) {
+                        toClearMap[r][c] = true;
+
+                        // 上方向に連続する水風呂ブロックを探索
+                        let upR = r - 1;
+                        while (upR >= 0 && board[upR][c] === TYPE_COLD) {
+                            toClearMap[upR][c] = true;
+                            upR--;
+                        }
+                        // 下方向に連続する水風呂ブロックを探索
+                        let downR = r + 1;
+                        while (downR < ROWS && board[downR][c] === TYPE_COLD) {
+                            toClearMap[downR][c] = true;
+                            downR++;
+                        }
+                    }
+                }
+
+                let clearedCount = 0;
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        if (toClearMap[r][c]) {
+                            board[r][c] = TYPE_EMPTY;
+                            clearedCount++;
+                        }
+                    }
+                }
+
+                score += clearedCount * 20;
                 scoreEl.textContent = score;
                 showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
                 
+                // 水風呂クリアでととのいフェーズへ移行
                 currentPhase = PHASE_TOTONO;
                 totovnoTurnsRemaining = 3;
                 nextPiece = generateRandomPiece();
@@ -444,6 +480,7 @@
             return false;
         }
 
+        // ③ ととのいフェーズ: 縦2×横2正方形で消去 ➔ 全お邪魔消去 ➔ 即座にサウナへ復帰
         function checkAndClearTotono() {
             let clearedSquares = 0;
             let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
@@ -463,8 +500,8 @@
                 }
             }
 
-            let clearedCount = 0;
             if (clearedSquares > 0) {
+                let clearedCount = 0;
                 for (let r = 0; r < ROWS; r++) {
                     for (let c = 0; c < COLS; c++) {
                         if (toClearMap[r][c]) {
@@ -475,31 +512,34 @@
                 }
                 score += clearedSquares * 300;
                 scoreEl.textContent = score;
-                showFloatingMessage(`🌿 TOTONO! +${clearedSquares * 300}`, window.innerWidth/2, 250, "text-green-400");
+                showFloatingMessage(`🌿 TOTONO! 正方形成立！`, window.innerWidth/2, 250, "text-green-400");
 
-                removeJammerBlocks(clearedCount);
+                // すべてのお邪魔ブロックを消去
+                removeAllJammers();
+
+                // 2周目のサウナフェーズに戻る（サウナカウンターを0にリセット）
+                saunaClearCount = 0;
+                currentPhase = PHASE_SAUNA;
+                totovnoTurnsRemaining = 0;
+                nextPiece = generateRandomPiece();
+                updateUI();
                 return true;
             }
             return false;
         }
 
-        function removeJammerBlocks(count) {
-            let jammers = [];
+        function removeAllJammers() {
+            let removed = 0;
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     if (board[r][c] === TYPE_JAMMER) {
-                        jammers.push({r, c});
+                        board[r][c] = TYPE_EMPTY;
+                        removed++;
                     }
                 }
             }
-            jammers.sort(() => Math.random() - 0.5);
-            let removeCount = Math.min(count, jammers.length);
-            for (let i = 0; i < removeCount; i++) {
-                let j = jammers[i];
-                board[j.r][j.c] = TYPE_EMPTY;
-            }
-            if (removeCount > 0) {
-                showFloatingMessage(`✨ お邪魔ブロック ${removeCount}個消去！`, window.innerWidth/2, 290, "text-amber-300");
+            if (removed > 0) {
+                showFloatingMessage(`✨ お邪魔ブロック全 ${removed}個浄化！`, window.innerWidth/2, 290, "text-amber-300");
             }
         }
 
@@ -598,7 +638,6 @@
             }
             phaseBadgeEl.textContent = phaseBadgeName;
             
-            // フェーズに応じて枠色を変更
             boardContainerEl.className = `relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 ${borderColor} transition-all duration-300`;
             topStatusBarEl.className = `w-full bg-slate-800/90 p-2.5 rounded-xl border-2 ${borderColor} shadow-md flex items-center justify-between transition-all duration-300`;
 
