@@ -17,10 +17,23 @@
             background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.3) 100%);
             box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.3), 0 4px 6px rgba(0,0,0,0.2);
         }
-        .block-red { background: linear-gradient(135deg, #ff6b6b 0%, #e03131 100%); }
-        .block-blue { background: linear-gradient(135deg, #4dabf7 0%, #1971c2 100%); }
-        .block-gray { background: linear-gradient(135deg, #adb5bd 0%, #495057 100%); }
-        .block-green { background: linear-gradient(135deg, #69db7c 0%, #2b8a3e 100%); }
+        /* 色覚多様性（色弱）対応：色＋独自の幾何学パターンやテクスチャ・枠線を付与 */
+        .block-red { 
+            background: linear-gradient(135deg, #ff6b6b 0%, #e03131 100%);
+            border: 2px dashed rgba(255, 255, 255, 0.7);
+        }
+        .block-blue { 
+            background: linear-gradient(135deg, #4dabf7 0%, #1971c2 100%);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        .block-gray { 
+            background: linear-gradient(135deg, #adb5bd 0%, #495057 100%);
+            border: 2px dotted rgba(255, 255, 255, 0.5);
+        }
+        .block-green { 
+            background: linear-gradient(135deg, #69db7c 0%, #2b8a3e 100%);
+            border: 2px double rgba(255, 255, 255, 0.9);
+        }
         
         @keyframes pulse-glow {
             0%, 100% { filter: drop-shadow(0 0 2px rgba(255,255,255,0.8)); }
@@ -37,26 +50,29 @@
             pointer-events: none;
         }
 
-        @keyframes blink-fade {
-            0% { transform: scale(1); filter: brightness(1); opacity: 1; }
-            25% { transform: scale(1.1); filter: brightness(3); opacity: 0.3; }
-            50% { transform: scale(0.9); filter: brightness(0.5); opacity: 1; }
-            75% { transform: scale(1.15); filter: brightness(3.5); opacity: 0.2; }
-            100% { transform: scale(0); filter: brightness(4); opacity: 0; }
+        /* 満足感のある贅沢な消去演出：激しいポップ・発光・シェイク・粒子エフェクト風アニメーション */
+        @keyframes luxury-clear {
+            0% { transform: scale(1) rotate(0deg); filter: brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0)); opacity: 1; }
+            20% { transform: scale(1.25) rotate(-6deg); filter: brightness(3.5) drop-shadow(0 0 12px rgba(255,255,255,1)); opacity: 0.9; }
+            40% { transform: scale(0.85) rotate(6deg); filter: brightness(0.5); opacity: 1; }
+            60% { transform: scale(1.3) rotate(-3deg); filter: brightness(4) drop-shadow(0 0 16px rgba(255,255,255,1)); opacity: 0.7; }
+            80% { transform: scale(0.6) rotate(3deg); filter: brightness(2); opacity: 0.4; }
+            100% { transform: scale(0) rotate(0deg); filter: brightness(5); opacity: 0; }
         }
         .clearing-anim {
-            animation: blink-fade 0.6s ease-in-out forwards;
+            animation: luxury-clear 0.75s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+            z-index: 20;
         }
 
         @keyframes totono-banner {
-            0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
-            20% { transform: scale(1.2) rotate(3deg); opacity: 1; }
-            40% { transform: scale(1) rotate(0deg); opacity: 1; }
-            80% { transform: scale(1) rotate(0deg); opacity: 1; }
-            100% { transform: scale(1.3) rotate(5deg); opacity: 0; }
+            0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+            15% { transform: scale(1.25) rotate(4deg); opacity: 1; }
+            30% { transform: scale(1) rotate(0deg); opacity: 1; }
+            85% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 15px rgba(105,219,124,0.8)); }
+            100% { transform: scale(1.35) rotate(-5deg); opacity: 0; }
         }
         .totono-banner-anim {
-            animation: totono-banner 1.2s ease-in-out forwards;
+            animation: totono-banner 1.4s ease-in-out forwards;
             pointer-events: none;
         }
     </style>
@@ -66,39 +82,46 @@
     <!-- ヘッダータイトル -->
     <header class="text-center my-1">
         <h1 class="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-xs sm:text-sm font-bold text-slate-300">-トトノス- v1.1</span>
+            TOTONOS <span class="text-xs sm:text-sm font-bold text-slate-300">-トトノス- v1.2</span>
         </h1>
     </header>
 
     <!-- メインコンテンツ領域 -->
     <main class="flex flex-col items-center justify-center gap-3 w-full max-w-md flex-1">
         
-        <!-- 上部ステータスバー (NEXT, フェーズ, スコア) -->
-        <div id="top-status-bar" class="w-full bg-slate-800/90 p-2.5 rounded-xl border-2 border-red-500 shadow-md flex items-center justify-between transition-all duration-300">
-            <!-- 現在のフェーズ -->
-            <div class="flex flex-col">
-                <div class="text-[9px] font-bold text-slate-400 tracking-wider">PHASE</div>
-                <div id="phase-badge" class="px-2 py-1 rounded-lg text-xs font-black text-white bg-red-600 glossy shadow">
-                    サウナフェーズ
+        <!-- 上部ステータスバー (NEXT, フェーズ, スコア, プログレス) -->
+        <div id="top-status-bar" class="w-full bg-slate-800/90 p-2.5 rounded-xl border-2 border-red-500 shadow-md flex flex-col gap-1.5 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <!-- 現在のフェーズ -->
+                <div class="flex flex-col">
+                    <div class="text-[9px] font-bold text-slate-400 tracking-wider">PHASE</div>
+                    <div id="phase-badge" class="px-2 py-1 rounded-lg text-xs font-black text-white bg-red-600 glossy shadow">
+                        サウナフェーズ
+                    </div>
+                    <div id="phase-sub" class="text-[9px] text-slate-300 mt-0.5">赤8個連結で水風呂へ</div>
                 </div>
-                <div id="phase-sub" class="text-[9px] text-slate-300 mt-0.5">赤8個連結で水風呂へ</div>
+
+                <!-- スコア -->
+                <div class="text-center flex flex-col">
+                    <div class="text-[9px] font-bold text-slate-400 tracking-wider">SCORE / HIGH</div>
+                    <div class="flex items-baseline gap-1">
+                        <span id="score" class="text-lg font-black text-amber-400">0</span>
+                        <span class="text-xs text-slate-400">/ <span id="highscore">0</span></span>
+                    </div>
+                </div>
+
+                <!-- NEXTプレビュー -->
+                <div class="flex flex-col items-center">
+                    <span class="text-[9px] font-bold text-slate-400 tracking-wider mb-0.5">NEXT</span>
+                    <div id="next-preview" class="flex gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-700 items-center justify-center">
+                        <!-- プレビューブロック横並び -->
+                    </div>
+                </div>
             </div>
 
-            <!-- スコア -->
-            <div class="text-center flex flex-col">
-                <div class="text-[9px] font-bold text-slate-400 tracking-wider">SCORE / HIGH</div>
-                <div class="flex items-baseline gap-1">
-                    <span id="score" class="text-lg font-black text-amber-400">0</span>
-                    <span class="text-xs text-slate-400">/ <span id="highscore">0</span></span>
-                </div>
-            </div>
-
-            <!-- NEXTプレビュー -->
-            <div class="flex flex-col items-center">
-                <span class="text-[9px] font-bold text-slate-400 tracking-wider mb-0.5">NEXT</span>
-                <div id="next-preview" class="flex gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-700 items-center justify-center">
-                    <!-- プレビューブロック横並び -->
-                </div>
+            <!-- プログレスバー（直感的な進捗表示） -->
+            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-700">
+                <div id="progress-bar-fill" class="bg-red-500 h-full transition-all duration-300" style="width: 0%;"></div>
             </div>
         </div>
 
@@ -110,7 +133,7 @@
             </div>
 
             <!-- ゲームオーバー / スタートオーバーレイ -->
-            <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-10 m-2">
+            <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-30 m-2">
                 
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
@@ -205,6 +228,7 @@
         const boardEl = document.getElementById('board');
         const boardContainerEl = document.getElementById('board-container');
         const topStatusBarEl = document.getElementById('top-status-bar');
+        const progressBarFillEl = document.getElementById('progress-bar-fill');
         const scoreEl = document.getElementById('score');
         const highscoreEl = document.getElementById('highscore');
         const phaseBadgeEl = document.getElementById('phase-badge');
@@ -307,7 +331,6 @@
         function generateRandomPiece() {
             let types = [];
             if (currentPhase === PHASE_TOTONO) {
-                // ととのいフェーズでは緑(TOTONO)に加えてサウナ、水風呂、雑念もランダムに出現
                 types = [TYPE_TOTONO, TYPE_TOTONO, TYPE_SAUNA, TYPE_COLD, TYPE_JAMMER];
             } else {
                 types = [TYPE_SAUNA, TYPE_COLD, TYPE_JAMMER];
@@ -431,11 +454,13 @@
                 }
 
                 if (clearedCoords.length > 0) {
+                    // 各消去セルにリッチなポップ・発光アニメーションを適用
                     for (let cell of clearedCoords) {
                         const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
                         if (cellEl) cellEl.classList.add('clearing-anim');
                     }
 
+                    // 演出時間を少し長めに確保し、プレイヤーが消去をしっかり認識できるようにする (750ms)
                     setTimeout(() => {
                         for (let cell of clearedCoords) {
                             board[cell.r][cell.c] = TYPE_EMPTY;
@@ -449,7 +474,7 @@
                             currentPhase = PHASE_COLD;
                             updateUI();
                             applyGravityWithAnimation(() => {
-                                setTimeout(stepChain, 300);
+                                setTimeout(stepChain, 350);
                             });
                             return;
                         } else if (actionType === 'COLD') {
@@ -461,7 +486,7 @@
                             nextPiece = generateRandomPiece();
                             updateUI();
                             applyGravityWithAnimation(() => {
-                                setTimeout(stepChain, 300);
+                                setTimeout(stepChain, 350);
                             });
                             return;
                         } else if (actionType === 'TOTONO') {
@@ -486,11 +511,11 @@
                             }
 
                             applyGravityWithAnimation(() => {
-                                setTimeout(stepChain, 300);
+                                setTimeout(stepChain, 350);
                             });
                             return;
                         }
-                    }, 600);
+                    }, 750);
                 } else {
                     onComplete();
                 }
@@ -498,6 +523,7 @@
             stepChain();
         }
 
+        // 自然落下をより滑らかに見せるアニメーション処理
         function applyGravityWithAnimation(callback) {
             let fallMap = [];
             let maxFallSteps = 0;
@@ -546,7 +572,8 @@
                 fallMap.forEach(item => {
                     let cellEl = document.getElementById(`cell-${item.toR}-${item.c}`);
                     if (cellEl) {
-                        cellEl.style.transition = 'transform 0.25s ease-in';
+                        // 落下アニメーションに少し弾み（ease-out）を持たせ、着地の心地よさを向上
+                        cellEl.style.transition = 'transform 0.32s cubic-bezier(0.25, 1, 0.5, 1)';
                         cellEl.style.transform = 'translateY(0)';
                     }
                 });
@@ -554,7 +581,7 @@
                 setTimeout(() => {
                     render();
                     if (callback) callback();
-                }, 260);
+                }, 340);
             });
         }
 
@@ -563,7 +590,7 @@
             banner.className = 'absolute inset-0 flex items-center justify-center z-40 pointer-events-none';
             banner.innerHTML = `<div class="text-3xl sm:text-5xl font-black text-green-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] bg-black/60 px-6 py-3 rounded-2xl border-4 border-green-400 totono-banner-anim">${text}</div>`;
             boardContainerEl.appendChild(banner);
-            setTimeout(() => banner.remove(), 1200);
+            setTimeout(() => banner.remove(), 1400);
         }
 
         function getSaunaClearCoords() {
@@ -755,26 +782,38 @@
         function updateUI() {
             let phaseBadgeName = "";
             let borderColor = "";
+            let progressPercent = 0;
+
             if (currentPhase === PHASE_SAUNA) {
                 phaseBadgeName = "サウナフェーズ";
                 phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-red-600 glossy shadow";
                 phaseSubEl.textContent = "赤8個連結で水風呂へ";
                 borderColor = "border-red-500";
+                progressBarFillEl.className = "bg-red-500 h-full transition-all duration-300";
+                // サウナフェーズの進捗を簡易計算 (盤面の赤ブロック数 / 目安8個)
+                let redCount = 0;
+                for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(board[r][c]===TYPE_SAUNA) redCount++;
+                progressPercent = Math.min(100, (redCount / 8) * 100);
             } else if (currentPhase === PHASE_COLD) {
                 phaseBadgeName = "水風呂フェーズ";
                 phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-blue-600 glossy shadow";
                 phaseSubEl.textContent = "青1列完成でととのいへ";
                 borderColor = "border-blue-500";
+                progressBarFillEl.className = "bg-blue-500 h-full transition-all duration-300";
+                progressPercent = 50; // 固定目安
             } else if (currentPhase === PHASE_TOTONO) {
                 phaseBadgeName = "ととのいフェーズ";
                 phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-green-600 glossy shadow";
                 phaseSubEl.textContent = `消去ステップ: ${totonoClearStep}/4`;
                 borderColor = "border-green-500";
+                progressBarFillEl.className = "bg-green-500 h-full transition-all duration-300";
+                progressPercent = (totonoClearStep / 4) * 100;
             }
             phaseBadgeEl.textContent = phaseBadgeName;
+            progressBarFillEl.style.width = `${progressPercent}%`;
             
             boardContainerEl.className = `relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 ${borderColor} transition-all duration-300`;
-            topStatusBarEl.className = `w-full bg-slate-800/90 p-2.5 rounded-xl border-2 ${borderColor} shadow-md flex items-center justify-between transition-all duration-300`;
+            topStatusBarEl.className = `w-full bg-slate-800/90 p-2.5 rounded-xl border-2 ${borderColor} shadow-md flex flex-col gap-1.5 transition-all duration-300`;
 
             updateNextPreview();
         }
