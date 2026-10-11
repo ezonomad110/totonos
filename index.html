@@ -523,11 +523,9 @@
         function gameLoop() {
             if (isGameOver || isPaused) return;
             
-            // 下への移動判定
             if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
                 currentPiece.y++;
             } else {
-                // ぷよぷよ風独立落下（半身落ち）の適正処理
                 if (tryIndependentSettle()) {
                     render();
                     return;
@@ -537,7 +535,7 @@
             render();
         }
 
-        // ぷよぷよ風「半身落ち（独立落下）」の堅牢な修正
+        // ぷよぷよ風「半身落ち（独立落下）」の修正版：既存ブロックを絶対に上書きしない安全な判定
         function tryIndependentSettle() {
             const off = getOffset(currentPiece.rot);
             let x1 = currentPiece.x;
@@ -551,26 +549,34 @@
             let canFall1 = (y1 + 1 < ROWS && board[y1 + 1][x1] === TYPE_EMPTY);
             let canFall2 = (y2 + 1 < ROWS && board[y2 + 1][x2] === TYPE_EMPTY);
 
-            // 片方だけ落ちるスペースがあり、もう一方が接地している場合
             if (canFall1 && !canFall2) {
-                // 接地した方を先にボードに固定し、浮いている方を新しいcurrentPiece（単体）として1マス下に継続落下させる
+                // block2側を安全にボードに固定し、block1を単体として継続落下
                 board[y2][x2] = t2;
                 currentPiece.type1 = t1;
-                currentPiece.type2 = t1; // ダミー化
+                currentPiece.type2 = t1;
                 currentPiece.rot = 2;
-                // 1個のブロックとして継続落下させるために、もし下が可能ならyをすすめる
                 if (y1 + 1 < ROWS && board[y1 + 1][x1] === TYPE_EMPTY) {
                     currentPiece.y++;
                     return true;
+                } else {
+                    board[y1][x1] = t1;
+                    lockPieceDirectly();
+                    return true;
                 }
             } else if (!canFall1 && canFall2) {
+                // block1側を安全にボードに固定し、block2を単体として継続落下
                 board[y1][x1] = t1;
                 currentPiece.x = x2;
-                currentPiece.y = y2 + 1;
+                currentPiece.y = y2;
                 currentPiece.type1 = t2;
                 currentPiece.type2 = t2;
                 currentPiece.rot = 2;
                 if (y2 + 1 < ROWS && board[y2 + 1][x2] === TYPE_EMPTY) {
+                    currentPiece.y++;
+                    return true;
+                } else {
+                    board[y2][x2] = t2;
+                    lockPieceDirectly();
                     return true;
                 }
             }
@@ -578,10 +584,27 @@
             return false;
         }
 
+        function lockPieceDirectly() {
+            endSoftDrop();
+            processClearsAndGravity(() => {
+                spawnNewPiece();
+                updateUI();
+            });
+        }
+
         function lockPiece() {
             const off = getOffset(currentPiece.rot);
-            board[currentPiece.y][currentPiece.x] = currentPiece.type1;
-            board[currentPiece.y + off.dy][currentPiece.x + off.dx] = currentPiece.type2;
+            // 既存のボード上の空きマスにのみ書き込む（上書き防止）
+            if (board[currentPiece.y][currentPiece.x] === TYPE_EMPTY) {
+                board[currentPiece.y][currentPiece.x] = currentPiece.type1;
+            }
+            let targetY2 = currentPiece.y + off.dy;
+            let targetX2 = currentPiece.x + off.dx;
+            if (targetY2 >= 0 && targetY2 < ROWS && targetX2 >= 0 && targetX2 < COLS) {
+                if (board[targetY2][targetX2] === TYPE_EMPTY) {
+                    board[targetY2][targetX2] = currentPiece.type2;
+                }
+            }
 
             endSoftDrop();
             processClearsAndGravity(() => {
