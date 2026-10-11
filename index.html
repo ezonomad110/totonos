@@ -77,11 +77,17 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-between p-2 sm:p-4 overflow-x-hidden">
 
-    <!-- ヘッダータイトル -->
-    <header class="text-center my-1">
-        <h1 class="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-xs sm:text-sm font-bold text-slate-300">-トトノス- v1.2</span>
+    <!-- ヘッダータイトル ＆ 上部コントロール -->
+    <header class="w-full max-w-md flex items-center justify-between my-1 px-1">
+        <button onclick="returnToHome()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
+            🏠 ホーム
+        </button>
+        <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
+            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス-</span>
         </h1>
+        <button onclick="togglePause()" id="pause-btn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
+            ⏸ 一時停止
+        </button>
     </header>
 
     <!-- メインコンテンツ領域 -->
@@ -130,7 +136,7 @@
                 <!-- JSで動的生成 -->
             </div>
 
-            <!-- ゲームオーバー / スタートオーバーレイ -->
+            <!-- ゲームオーバー / スタート / 一時停止 オーバーレイ -->
             <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-30 m-2">
                 
                 <!-- スタート画面メインコンテンツ -->
@@ -172,11 +178,6 @@
         <button onclick="rotatePieceClockwise()" class="bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">↻ 90°</button>
     </footer>
 
-    <!-- リセットボタン -->
-    <div class="text-center mb-1">
-        <button onclick="resetGame()" class="text-xs text-slate-400 underline py-1 px-3">ゲームをリセット</button>
-    </div>
-
     <!-- アイコン用SVG定義 -->
     <svg style="display: none;">
         <symbol id="icon-fire" viewBox="0 0 24 24">
@@ -213,8 +214,9 @@
         let highScore = localStorage.getItem('totonos_highscore') || 0;
         let currentPhase = PHASE_SAUNA;
         let saunaClearCount = 0;
-        let totonoClearStep = 0; // ととのいフェーズ消去回数 (0~4)
+        let totonoClearStep = 0;
         let isGameOver = true;
+        let isPaused = false;
         let dropInterval = null;
         let normalDropSpeed = 800;
         let softDropSpeed = 80;
@@ -222,6 +224,81 @@
 
         let currentPiece = null;
         let nextPiece = null;
+
+        // Web Audio API によるBGM・効果音ジェネレーター
+        let audioCtx = null;
+        let bgmInterval = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 効果音：ブロック消去音（心地よい鈴音風チャイム）
+        function playClearSound() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3); // C6
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        // BGM：アンビエントリラックスループ（穏やかなサウナ風メロディ）
+        function startBGM() {
+            if (bgmInterval) return;
+            const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+            let step = 0;
+
+            bgmInterval = setInterval(() => {
+                if (isGameOver || isPaused) return;
+                try {
+                    initAudio();
+                    const now = audioCtx.currentTime;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(notes[step % notes.length], now);
+
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 1.2);
+                    step++;
+                } catch(e) {}
+            }, 1800);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
 
         const boardEl = document.getElementById('board');
         const boardContainerEl = document.getElementById('board-container');
@@ -238,6 +315,7 @@
         const menuMainEl = document.getElementById('menu-main');
         const menuRulesEl = document.getElementById('menu-rules');
         const nextPreviewEl = document.getElementById('next-preview');
+        const pauseBtnEl = document.getElementById('pause-btn');
 
         highscoreEl.textContent = highScore;
         initBoardDOM();
@@ -265,12 +343,15 @@
         }
 
         function startGame() {
+            initAudio();
             board = Array(ROWS).fill(null).map(() => Array(COLS).fill(TYPE_EMPTY));
             score = 0;
             currentPhase = PHASE_SAUNA;
             saunaClearCount = 0;
             totonoClearStep = 0;
             isGameOver = false;
+            isPaused = false;
+            pauseBtnEl.textContent = "⏸ 一時停止";
             scoreEl.textContent = score;
             
             overlayEl.classList.add('opacity-0', 'pointer-events-none');
@@ -279,16 +360,56 @@
             spawnNewPiece();
             
             setDropInterval(normalDropSpeed);
+            startBGM();
             updateUI();
+        }
+
+        function togglePause() {
+            if (isGameOver) return;
+            isPaused = !isPaused;
+            if (isPaused) {
+                if (dropInterval) clearInterval(dropInterval);
+                pauseBtnEl.textContent = "▶ 再開";
+                overlayTitleEl.textContent = "PAUSE";
+                overlayDescEl.textContent = "一時停止中";
+                startBtnEl.textContent = "ゲームを続ける";
+                startBtnEl.onclick = togglePause;
+                menuMainEl.classList.remove('hidden');
+                menuRulesEl.classList.add('hidden');
+                overlayEl.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                overlayEl.classList.add('opacity-0', 'pointer-events-none');
+                startBtnEl.textContent = "ゲームスタート";
+                startBtnEl.onclick = startGame;
+                setDropInterval(normalDropSpeed);
+                pauseBtnEl.textContent = "⏸ 一時停止";
+            }
+        }
+
+        function returnToHome() {
+            if (dropInterval) clearInterval(dropInterval);
+            stopBGM();
+            isGameOver = true;
+            isPaused = false;
+            pauseBtnEl.textContent = "⏸ 一時停止";
+            menuMainEl.classList.remove('hidden');
+            menuRulesEl.classList.add('hidden');
+            overlayTitleEl.textContent = "TOTONOS";
+            overlayDescEl.textContent = "サウナ・水風呂・ととのいを巡る落ちものパズル";
+            startBtnEl.textContent = "ゲームスタート";
+            startBtnEl.onclick = startGame;
+            overlayEl.classList.remove('opacity-0', 'pointer-events-none');
         }
 
         function setDropInterval(speed) {
             if (dropInterval) clearInterval(dropInterval);
-            dropInterval = setInterval(gameLoop, speed);
+            if (!isPaused && !isGameOver) {
+                dropInterval = setInterval(gameLoop, speed);
+            }
         }
 
         function startSoftDrop() {
-            if (isGameOver || isSoftDropping) return;
+            if (isGameOver || isPaused || isSoftDropping) return;
             isSoftDropping = true;
             setDropInterval(softDropSpeed);
         }
@@ -296,22 +417,12 @@
         function endSoftDrop() {
             if (!isSoftDropping) return;
             isSoftDropping = false;
-            if (!isGameOver) setDropInterval(normalDropSpeed);
-        }
-
-        function resetGame() {
-            if (dropInterval) clearInterval(dropInterval);
-            isGameOver = true;
-            menuMainEl.classList.remove('hidden');
-            menuRulesEl.classList.add('hidden');
-            overlayTitleEl.textContent = "TOTONOS";
-            overlayDescEl.textContent = "サウナ・水風呂・ととのいを巡る落ちものパズル";
-            startBtnEl.textContent = "ゲームスタート";
-            overlayEl.classList.remove('opacity-0', 'pointer-events-none');
+            if (!isGameOver && !isPaused) setDropInterval(normalDropSpeed);
         }
 
         function gameOver() {
             isGameOver = true;
+            stopBGM();
             if (dropInterval) clearInterval(dropInterval);
             if (score > highScore) {
                 highScore = score;
@@ -320,6 +431,7 @@
             }
             menuMainEl.classList.remove('hidden');
             menuRulesEl.classList.add('hidden');
+            startBtnEl.onclick = startGame;
             overlayTitleEl.textContent = "GAME OVER";
             overlayDescEl.textContent = `最終スコア: ${score}点`;
             startBtnEl.textContent = "もういちどプレイ";
@@ -414,7 +526,7 @@
         }
 
         function gameLoop() {
-            if (isGameOver) return;
+            if (isGameOver || isPaused) return;
             if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
                 currentPiece.y++;
             } else {
@@ -437,6 +549,7 @@
 
         function processClearsAndGravity(onComplete) {
             function stepChain() {
+                if (isPaused || isGameOver) return;
                 let clearedCoords = [];
                 let actionType = null;
 
@@ -452,6 +565,7 @@
                 }
 
                 if (clearedCoords.length > 0) {
+                    playClearSound(); // 効果音再生
                     for (let cell of clearedCoords) {
                         const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
                         if (cellEl) cellEl.classList.add('clearing-anim');
@@ -722,7 +836,7 @@
         }
 
         function movePiece(dx, dy) {
-            if (isGameOver) return;
+            if (isGameOver || isPaused) return;
             if (isValidPosition(currentPiece.x + dx, currentPiece.y + dy, currentPiece.rot, currentPiece)) {
                 currentPiece.x += dx;
                 currentPiece.y += dy;
@@ -733,7 +847,7 @@
         }
 
         function rotatePieceClockwise() {
-            if (isGameOver) return;
+            if (isGameOver || isPaused) return;
             let nextRot = (currentPiece.rot + 1) % 4;
             let kicks = [0, -1, 1, -2, 2];
             for (let k of kicks) {
@@ -757,7 +871,7 @@
                 }
             }
 
-            if (currentPiece && !isGameOver) {
+            if (currentPiece && !isGameOver && !isPaused) {
                 const off = getOffset(currentPiece.rot);
                 const coords = [
                     {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type1},
@@ -823,7 +937,7 @@
         }
 
         window.addEventListener('keydown', (e) => {
-            if (isGameOver) return;
+            if (isGameOver || isPaused) return;
             if (e.key === 'ArrowLeft' || e.key === 'a') {
                 movePiece(-1, 0);
             } else if (e.key === 'ArrowRight' || e.key === 'd') {
