@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOTONOS -トトノス- v1.7</title>
+    <title>TOTONOS -トトノス- v1.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
@@ -84,7 +84,7 @@
             🏠 ホーム
         </button>
         <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v1.7</span>
+            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v1.8</span>
         </h1>
         <button onclick="togglePause()" id="pause-btn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             ⏸ 一時停止
@@ -143,7 +143,7 @@
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 1.7</p>
+                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 1.8</p>
                     <p id="overlay-desc" class="text-xs text-slate-300 mb-5 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
                         ゲームスタート
@@ -528,8 +528,9 @@
             if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
                 currentPiece.y++;
             } else {
-                // 完全分離型・安全な独立落下判定 (v1.7)
-                if (trySeparateIndependentSettle()) {
+                // 安全で確実な独立落下（半身落ち）の判定：
+                // ツモ全体として下に落ちられない場合でも、片方だけに落下スペースがあり、かつその落下先が空いている場合のみ独立して落とす
+                if (trySafeIndependentSettle()) {
                     render();
                     return;
                 }
@@ -538,9 +539,8 @@
             render();
         }
 
-        // 完全分離型の安全な独立落下ロジック：
-        // 2つのブロックを個別に評価し、片方だけ落とせる場合は片方だけをボードに固定して、もう片方を新しい落下中の単体ブロックに昇華する
-        function trySeparateIndependentSettle() {
+        // 安全な独立落下ロジック（重なり・上書きバグを完全に防止）
+        function trySafeIndependentSettle() {
             const off = getOffset(currentPiece.rot);
             let x1 = currentPiece.x;
             let y1 = currentPiece.y;
@@ -556,22 +556,20 @@
             // ブロック1が落ちて、ブロック2が接地する場合
             if (canFall1 && !canFall2) {
                 if (board[y2][x2] === TYPE_EMPTY) {
-                    board[y2][x2] = t2; // 接地した方だけをボードに書き込む
+                    board[y2][x2] = t2; // 空いている安全な場所のみ固定
                 }
-                // 残ったブロック1を、次の1マス落とした状態で新しいcurrentPiece（単体扱い）にする
                 currentPiece.x = x1;
                 currentPiece.y = y1 + 1;
                 currentPiece.type1 = t1;
-                currentPiece.type2 = t1; // 同じ型で埋めてペアとして機能させる
+                currentPiece.type2 = t1;
                 currentPiece.rot = 2;
                 return true;
             }
             // ブロック2が落ちて、ブロック1が接地する場合
             else if (!canFall1 && canFall2) {
                 if (board[y1][x1] === TYPE_EMPTY) {
-                    board[y1][x1] = t1; // 接地した方だけをボードに書き込む
+                    board[y1][x1] = t1; // 空いている安全な場所のみ固定
                 }
-                // 残ったブロック2を新しいcurrentPieceにする
                 currentPiece.x = x2;
                 currentPiece.y = y2 + 1;
                 currentPiece.type1 = t2;
@@ -590,6 +588,7 @@
             let x2 = currentPiece.x + off.dx;
             let y2 = currentPiece.y + off.dy;
 
+            // 既存ブロックを絶対に押しつぶさないよう、空きマス（TYPE_EMPTY）のときだけ配置する
             if (y1 >= 0 && y1 < ROWS && x1 >= 0 && x1 < COLS && board[y1][x1] === TYPE_EMPTY) {
                 board[y1][x1] = currentPiece.type1;
             }
