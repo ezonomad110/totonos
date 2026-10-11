@@ -1,6 +1,4 @@
 
-processClearsAndGravity の中で、フェーズに応じた消去判定をその時の currentPhase に厳密に一致させ、水風呂クリア時はそこで一旦チェーンを区切るようにします。
-以下の修正済みの完全版コードをコピーして index.html に上書き保存してください。この修正により、水風呂クリア後は必ず「ととのいフェーズ」に移行し、緑ブロックの配置ターンが始まります。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -40,13 +38,16 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
             pointer-events: none;
         }
 
-        @keyframes flash-pop {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.15); filter: brightness(2.5); }
-            100% { transform: scale(0); opacity: 0; }
+        /* 点滅しながらゆっくり消える演出 */
+        @keyframes blink-fade {
+            0% { transform: scale(1); filter: brightness(1); opacity: 1; }
+            25% { transform: scale(1.1); filter: brightness(3); opacity: 0.3; }
+            50% { transform: scale(0.9); filter: brightness(0.5); opacity: 1; }
+            75% { transform: scale(1.15); filter: brightness(3.5); opacity: 0.2; }
+            100% { transform: scale(0); filter: brightness(4); opacity: 0; }
         }
         .clearing-anim {
-            animation: flash-pop 0.35s ease-in-out forwards;
+            animation: blink-fade 0.6s ease-in-out forwards;
         }
     </style>
 </head>
@@ -91,15 +92,15 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
             </div>
         </div>
 
-        <!-- 盤面コンテナ -->
-        <div id="board-container" class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-red-500 transition-all duration-300">
+        <!-- 盤面コンテナ (サイズ固定) -->
+        <div id="board-container" class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-red-500 transition-all duration-300" style="width: calc(min(82vw, 280px) + 16px); height: calc(min(123vw, 420px) + 16px);">
             <!-- グリッドボード (8列 × 12行) -->
-            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg" style="width: min(82vw, 280px); height: min(123vw, 420px);">
+            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg w-full h-full">
                 <!-- JSで動的生成 -->
             </div>
 
             <!-- ゲームオーバー / スタートオーバーレイ -->
-            <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-10">
+            <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-10 m-2">
                 <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
                 <p id="overlay-desc" class="text-sm text-slate-300 mb-6 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                 <button id="start-btn" onclick="startGame()" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110">
@@ -109,11 +110,13 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン -->
+    <!-- スマートフォン用タッチ操作ボタン（ソフトドロップ対応） -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-2">
         <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">◀</button>
         <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▶</button>
-        <button onclick="dropPiece()" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▼</button>
+        <button 
+            ontouchstart="startSoftDrop()" ontouchend="endSoftDrop()" onmousedown="startSoftDrop()" onmouseup="endSoftDrop()" onmouseleave="endSoftDrop()"
+            class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white select-none">▼</button>
         <button onclick="rotatePieceClockwise()" class="bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">↻ 90°</button>
     </footer>
 
@@ -161,7 +164,9 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
         let totovnoTurnsRemaining = 0;
         let isGameOver = true;
         let dropInterval = null;
-        let dropSpeed = 800;
+        let normalDropSpeed = 800;
+        let softDropSpeed = 80;
+        let isSoftDropping = false;
 
         let currentPiece = null;
         let nextPiece = null;
@@ -208,9 +213,25 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
             nextPiece = generateRandomPiece();
             spawnNewPiece();
             
-            if (dropInterval) clearInterval(dropInterval);
-            dropInterval = setInterval(gameLoop, dropSpeed);
+            setDropInterval(normalDropSpeed);
             updateUI();
+        }
+
+        function setDropInterval(speed) {
+            if (dropInterval) clearInterval(dropInterval);
+            dropInterval = setInterval(gameLoop, speed);
+        }
+
+        function startSoftDrop() {
+            if (isGameOver || isSoftDropping) return;
+            isSoftDropping = true;
+            setDropInterval(softDropSpeed);
+        }
+
+        function endSoftDrop() {
+            if (!isSoftDropping) return;
+            isSoftDropping = false;
+            if (!isGameOver) setDropInterval(normalDropSpeed);
         }
 
         function resetGame() {
@@ -224,7 +245,7 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
 
         function gameOver() {
             isGameOver = true;
-            clearInterval(dropInterval);
+            if (dropInterval) clearInterval(dropInterval);
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('totonos_highscore', highScore);
@@ -338,6 +359,7 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
             board[currentPiece.y][currentPiece.x] = currentPiece.type1;
             board[currentPiece.y + off.dy][currentPiece.x + off.dx] = currentPiece.type2;
 
+            endSoftDrop();
             processClearsAndGravity(() => {
                 if (currentPhase === PHASE_TOTONO) {
                     totovnoTurnsRemaining--;
@@ -356,7 +378,6 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
                 let clearedCoords = [];
                 let actionType = null;
 
-                // 現在のフェーズに応じたクリア判定のみを実行（誤爆を防ぐ）
                 if (currentPhase === PHASE_SAUNA) {
                     clearedCoords = getSaunaClearCoords();
                     actionType = 'SAUNA';
@@ -374,6 +395,7 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
                         if (cellEl) cellEl.classList.add('clearing-anim');
                     }
 
+                    // さらにゆっくり点滅・消去するようディレイを600msに調整
                     setTimeout(() => {
                         for (let cell of clearedCoords) {
                             board[cell.r][cell.c] = TYPE_EMPTY;
@@ -384,9 +406,8 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
                             scoreEl.textContent = score;
                             showFloatingMessage(`🔥 SAUNA CLEAR! 💧水風呂へ突入！`, window.innerWidth/2, 250, "text-blue-400");
                             saunaClearCount++;
-                            currentPhase = PHASE_COLD; // 水風呂フェーズへ確実に移行
+                            currentPhase = PHASE_COLD;
                             updateUI();
-                            // 水風呂へ移行した直後は、この連鎖ステップをここで一旦終了し、プレイヤー操作へ移る
                             applyGravity();
                             render();
                             onComplete();
@@ -395,11 +416,10 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
                             score += clearedCoords.length * 20;
                             scoreEl.textContent = score;
                             showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
-                            currentPhase = PHASE_TOTONO; // ととのいフェーズへ確実に移行
+                            currentPhase = PHASE_TOTONO;
                             totovnoTurnsRemaining = 3;
                             nextPiece = generateRandomPiece();
                             updateUI();
-                            // 水風呂クリア直後も連鎖を一旦止め、ととのいフェーズのブロック配置権を渡す
                             applyGravity();
                             render();
                             onComplete();
@@ -410,7 +430,7 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
                             showFloatingMessage(`🌿 TOTONO! 正方形成立！`, window.innerWidth/2, 250, "text-green-400");
                             removeAllJammers();
                             saunaClearCount = 0;
-                            currentPhase = PHASE_SAUNA; // サウナフェーズへ復帰
+                            currentPhase = PHASE_SAUNA;
                             totovnoTurnsRemaining = 0;
                             nextPiece = generateRandomPiece();
                             updateUI();
@@ -422,8 +442,8 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
 
                         applyGravity();
                         render();
-                        setTimeout(stepChain, 200);
-                    }, 350);
+                        setTimeout(stepChain, 300);
+                    }, 600);
                 } else {
                     onComplete();
                 }
@@ -596,15 +616,6 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
             }
         }
 
-        function dropPiece() {
-            if (isGameOver) return;
-            while (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
-                currentPiece.y++;
-            }
-            lockPiece();
-            render();
-        }
-
         function render() {
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
@@ -675,11 +686,15 @@ processClearsAndGravity の中で、フェーズに応じた消去判定をそ�
             } else if (e.key === 'ArrowRight' || e.key === 'd') {
                 movePiece(1, 0);
             } else if (e.key === 'ArrowDown' || e.key === 's') {
-                movePiece(0, 1);
+                startSoftDrop();
             } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'x') {
                 rotatePieceClockwise();
-            } else if (e.key === ' ') {
-                dropPiece();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 's') {
+                endSoftDrop();
             }
         });
     </script>
