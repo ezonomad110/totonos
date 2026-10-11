@@ -40,7 +40,7 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-between p-2 sm:p-4 overflow-x-hidden">
 
-    <!-- ヘッダー -->
+    <!-- ヘッダータイトル -->
     <header class="text-center my-1">
         <h1 class="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
             TOTONOS <span class="text-xs sm:text-sm font-bold text-slate-300">-トトノス-</span>
@@ -48,17 +48,46 @@
     </header>
 
     <!-- メインコンテンツ領域 -->
-    <main class="flex flex-col lg:flex-row items-center justify-center gap-4 w-full max-w-4xl flex-1">
+    <main class="flex flex-col items-center justify-center gap-3 w-full max-w-md flex-1">
         
-        <!-- 左側：盤面 -->
-        <div class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-slate-700">
+        <!-- 上部ステータスバー (NEXT, フェーズ, スコア) -->
+        <div id="top-status-bar" class="w-full bg-slate-800/90 p-2.5 rounded-xl border-2 border-red-500 shadow-md flex items-center justify-between transition-all duration-300">
+            <!-- 現在のフェーズ -->
+            <div class="flex flex-col">
+                <div class="text-[9px] font-bold text-slate-400 tracking-wider">PHASE</div>
+                <div id="phase-badge" class="px-2 py-1 rounded-lg text-xs font-black text-white bg-red-600 glossy shadow">
+                    サウナフェーズ
+                </div>
+                <div id="phase-sub" class="text-[9px] text-slate-300 mt-0.5">赤8個連結で水風呂へ</div>
+            </div>
+
+            <!-- スコア -->
+            <div class="text-center flex flex-col">
+                <div class="text-[9px] font-bold text-slate-400 tracking-wider">SCORE / HIGH</div>
+                <div class="flex items-baseline gap-1">
+                    <span id="score" class="text-lg font-black text-amber-400">0</span>
+                    <span class="text-xs text-slate-400">/ <span id="highscore">0</span></span>
+                </div>
+            </div>
+
+            <!-- NEXTプレビュー -->
+            <div class="flex flex-col items-center">
+                <span class="text-[9px] font-bold text-slate-400 tracking-wider mb-0.5">NEXT</span>
+                <div id="next-preview" class="flex gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-700 items-center justify-center">
+                    <!-- プレビューブロック横並び -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 盤面コンテナ -->
+        <div id="board-container" class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-red-500 transition-all duration-300">
             <!-- グリッドボード (8列 × 12行) -->
-            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg" style="width: min(78vw, 280px); height: min(117vw, 420px);">
+            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg" style="width: min(82vw, 280px); height: min(123vw, 420px);">
                 <!-- JSで動的生成 -->
             </div>
 
             <!-- ゲームオーバー / スタートオーバーレイ -->
-            <div id="overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-10">
+            <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-10">
                 <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
                 <p id="overlay-desc" class="text-sm text-slate-300 mb-6 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                 <button id="start-btn" onclick="startGame()" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110">
@@ -66,52 +95,18 @@
                 </button>
             </div>
         </div>
-
-        <!-- 右側：ステータス＆コントロール -->
-        <div class="flex flex-row lg:flex-col justify-between items-center lg:items-stretch gap-3 w-full max-w-[280px] lg:max-w-[200px]">
-            
-            <!-- NEXT プレビュー -->
-            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-inner flex flex-col items-center">
-                <span class="text-xs font-bold text-slate-400 mb-1 tracking-widest">NEXT</span>
-                <div id="next-preview" class="flex flex-col gap-1 w-10 h-20 bg-slate-900 p-1 rounded-lg items-center justify-center border border-slate-700">
-                    <!-- 2ブロックプレビュー -->
-                </div>
-            </div>
-
-            <!-- 現在のフェーズ表示 -->
-            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-inner text-center flex-1 lg:flex-none">
-                <div class="text-[10px] font-bold text-slate-400 tracking-wider">PHASE</div>
-                <div id="phase-badge" class="mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-red-600 shadow-md">
-                    サウナフェーズ
-                </div>
-                <div id="phase-sub" class="text-[10px] text-slate-400 mt-1">赤8個連結で水風呂へ</div>
-            </div>
-
-            <!-- スコア表示 -->
-            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-inner text-center">
-                <div class="text-[10px] font-bold text-slate-400 tracking-wider">SCORE</div>
-                <div id="score" class="text-xl sm:text-2xl font-black text-amber-400 tracking-tight">0</div>
-                <div class="text-[10px] font-bold text-slate-400 tracking-wider mt-1">HIGH SCORE</div>
-                <div id="highscore" class="text-sm font-bold text-slate-300">0</div>
-            </div>
-
-            <!-- リセットボタン -->
-            <button onclick="resetGame()" class="hidden lg:block py-2 bg-slate-700 hover:bg-slate-600 font-bold rounded-xl text-xs glossy transition active:scale-95">
-                リセット
-            </button>
-        </div>
     </main>
 
     <!-- スマートフォン用タッチ操作ボタン -->
-    <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-2 lg:hidden">
+    <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-2">
         <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">◀</button>
         <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▶</button>
         <button onclick="rotatePieceClockwise()" class="bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">↻ 90°</button>
         <button onclick="dropPiece()" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▼</button>
     </footer>
 
-    <!-- フッター簡易リセット（スマホ用） -->
-    <div class="block lg:hidden text-center mb-1">
+    <!-- リセットボタン -->
+    <div class="text-center mb-1">
         <button onclick="resetGame()" class="text-xs text-slate-400 underline py-1 px-3">ゲームをリセット</button>
     </div>
 
@@ -159,6 +154,8 @@
         let nextPiece = null;
 
         const boardEl = document.getElementById('board');
+        const boardContainerEl = document.getElementById('board-container');
+        const topStatusBarEl = document.getElementById('top-status-bar');
         const scoreEl = document.getElementById('score');
         const highscoreEl = document.getElementById('highscore');
         const phaseBadgeEl = document.getElementById('phase-badge');
@@ -246,19 +243,25 @@
             nextPiece = generateRandomPiece();
             currentPiece.x = Math.floor(COLS / 2) - 1;
             currentPiece.y = 0;
-            currentPiece.rot = 0;
+            currentPiece.rot = 2; // 初期状態を下に展開（y=0, y=1が盤面内に入るように）
 
             if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot, currentPiece)) {
-                render();
-                gameOver();
+                // 万が一安全でない場合はy=1でトライ
+                currentPiece.y = 1;
+                if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot, currentPiece)) {
+                    render();
+                    gameOver();
+                    return;
+                }
             }
+            updateUI();
         }
 
         function updateNextPreview() {
             nextPreviewEl.innerHTML = '';
-            [nextPiece.type2, nextPiece.type1].forEach(type => {
+            [nextPiece.type1, nextPiece.type2].forEach(type => {
                 const div = document.createElement('div');
-                div.className = `w-7 h-7 rounded flex items-center justify-center shadow ${getBlockClass(type)}`;
+                div.className = `w-6 h-6 rounded flex items-center justify-center shadow ${getBlockClass(type)}`;
                 div.innerHTML = getBlockSvg(type);
                 nextPreviewEl.appendChild(div);
             });
@@ -276,10 +279,10 @@
 
         function getBlockSvg(type) {
             switch(type) {
-                case TYPE_SAUNA: return '<svg class="w-4 h-4 text-white icon-glow"><use href="#icon-fire"/></svg>';
-                case TYPE_COLD: return '<svg class="w-4 h-4 text-white icon-glow"><use href="#icon-water"/></svg>';
-                case TYPE_JAMMER: return '<svg class="w-4 h-4 text-white"><use href="#icon-jammer"/></svg>';
-                case TYPE_TOTONO: return '<svg class="w-4 h-4 text-white icon-glow"><use href="#icon-leaf"/></svg>';
+                case TYPE_SAUNA: return '<svg class="w-3.5 h-3.5 text-white icon-glow"><use href="#icon-fire"/></svg>';
+                case TYPE_COLD: return '<svg class="w-3.5 h-3.5 text-white icon-glow"><use href="#icon-water"/></svg>';
+                case TYPE_JAMMER: return '<svg class="w-3.5 h-3.5 text-white"><use href="#icon-jammer"/></svg>';
+                case TYPE_TOTONO: return '<svg class="w-3.5 h-3.5 text-white icon-glow"><use href="#icon-leaf"/></svg>';
                 default: return '';
             }
         }
@@ -576,20 +579,29 @@
 
         function updateUI() {
             let phaseBadgeName = "";
+            let borderColor = "";
             if (currentPhase === PHASE_SAUNA) {
                 phaseBadgeName = "サウナフェーズ";
-                phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-red-600 shadow-md";
+                phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-red-600 glossy shadow";
                 phaseSubEl.textContent = "赤8個連結で水風呂へ";
+                borderColor = "border-red-500";
             } else if (currentPhase === PHASE_COLD) {
                 phaseBadgeName = "水風呂フェーズ";
-                phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-blue-600 shadow-md";
+                phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-blue-600 glossy shadow";
                 phaseSubEl.textContent = "青1列完成でととのいへ";
+                borderColor = "border-blue-500";
             } else if (currentPhase === PHASE_TOTONO) {
                 phaseBadgeName = "ととのいフェーズ";
-                phaseBadgeEl.className = "mt-1 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-black glossy transition-all duration-300 text-white bg-green-600 shadow-md";
+                phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-green-600 glossy shadow";
                 phaseSubEl.textContent = `残り配置: ${totovnoTurnsRemaining}回`;
+                borderColor = "border-green-500";
             }
             phaseBadgeEl.textContent = phaseBadgeName;
+            
+            // フェーズに応じて枠色を変更
+            boardContainerEl.className = `relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 ${borderColor} transition-all duration-300`;
+            topStatusBarEl.className = `w-full bg-slate-800/90 p-2.5 rounded-xl border-2 ${borderColor} shadow-md flex items-center justify-between transition-all duration-300`;
+
             updateNextPreview();
         }
 
