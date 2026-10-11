@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOTONOS -トトノス- v1.9</title>
+    <title>TOTONOS -トトノス- v2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
@@ -84,7 +83,7 @@
             🏠 ホーム
         </button>
         <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v1.9</span>
+            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v2.0</span>
         </h1>
         <button onclick="togglePause()" id="pause-btn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             ⏸ 一時停止
@@ -143,7 +142,7 @@
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 1.9</p>
+                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 2.0</p>
                     <p id="overlay-desc" class="text-xs text-slate-300 mb-5 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
                         ゲームスタート
@@ -447,8 +446,7 @@
                 type2: types[Math.floor(Math.random() * types.length)],
                 x: Math.floor(COLS / 2) - 1,
                 y: 0,
-                rot: 2,
-                isSingle: false
+                rot: 2
             };
         }
 
@@ -458,11 +456,10 @@
             currentPiece.x = Math.floor(COLS / 2) - 1;
             currentPiece.y = 0;
             currentPiece.rot = 2;
-            currentPiece.isSingle = false;
 
-            if (!isValidPosition(currentPiece)) {
+            if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot)) {
                 currentPiece.y = 1;
-                if (!isValidPosition(currentPiece)) {
+                if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot)) {
                     render();
                     gameOver();
                     return;
@@ -510,116 +507,58 @@
             }
         }
 
-        // ピース全体の座標を取得するヘルパー
-        function getPieceCoords(piece) {
-            if (piece.isSingle) {
-                return [{x: piece.x, y: piece.y, type: piece.type1}];
-            } else {
-                const off = getOffset(piece.rot);
-                return [
-                    {x: piece.x, y: piece.y, type: piece.type1},
-                    {x: piece.x + off.dx, y: piece.y + off.dy, type: piece.type2}
-                ];
-            }
-        }
+        function isValidPosition(x, y, rot) {
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+            if (board[y][x] !== TYPE_EMPTY) return false;
 
-        function isValidPosition(piece, customX, customY, customRot) {
-            const x = customX !== undefined ? customX : piece.x;
-            const y = customY !== undefined ? customY : piece.y;
-            const rot = customRot !== undefined ? customRot : piece.rot;
+            const off = getOffset(rot);
+            const x2 = x + off.dx;
+            const y2 = y + off.dy;
 
-            if (piece.isSingle) {
-                if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
-                if (board[y][x] !== TYPE_EMPTY) return false;
-                return true;
-            } else {
-                if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
-                if (board[y][x] !== TYPE_EMPTY) return false;
+            if (x2 < 0 || x2 >= COLS || y2 < 0 || y2 >= ROWS) return false;
+            if (board[y2][x2] !== TYPE_EMPTY) return false;
 
-                const off = getOffset(rot);
-                const x2 = x + off.dx;
-                const y2 = y + off.dy;
-
-                if (x2 < 0 || x2 >= COLS || y2 < 0 || y2 >= ROWS) return false;
-                if (board[y2][x2] !== TYPE_EMPTY) return false;
-
-                return true;
-            }
+            return true;
         }
 
         function gameLoop() {
             if (isGameOver || isPaused) return;
             
-            if (isValidPosition(currentPiece, currentPiece.x, currentPiece.y + 1)) {
+            if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot)) {
                 currentPiece.y++;
             } else {
-                // 完全独立・単体モード対応の安全な半身落ち判定
-                if (trySafeIndependentSettle()) {
-                    render();
-                    return;
-                }
+                // 着地処理：ボードへ確定後に重力一括落下
                 lockPiece();
             }
             render();
         }
 
-        // 独立落下：片方が接地し、もう片方の下に空白がある場合、接地側を固定し残りを「単体モード」にする
-        function trySafeIndependentSettle() {
-            if (currentPiece.isSingle) return false; // すでに単体なら対象外
-
+        // 確実で安全なロック＆独立落下処理
+        function lockPiece() {
             const off = getOffset(currentPiece.rot);
             let x1 = currentPiece.x;
             let y1 = currentPiece.y;
-            let t1 = currentPiece.type1;
-
             let x2 = currentPiece.x + off.dx;
             let y2 = currentPiece.y + off.dy;
-            let t2 = currentPiece.type2;
 
-            let canFall1 = (y1 + 1 < ROWS && board[y1 + 1][x1] === TYPE_EMPTY);
-            let canFall2 = (y2 + 1 < ROWS && board[y2 + 1][x2] === TYPE_EMPTY);
-
-            // ブロック1が落ちて、ブロック2が接地する場合
-            if (canFall1 && !canFall2) {
-                if (board[y2][x2] === TYPE_EMPTY) {
-                    board[y2][x2] = t2; // 接地側を正確に固定
-                }
-                // 残ったブロック1を「単体モード」として1マス下に続行させる（種類の書き換えは絶対にしない）
-                currentPiece.x = x1;
-                currentPiece.y = y1 + 1;
-                currentPiece.type1 = t1;
-                currentPiece.isSingle = true;
-                return true;
+            // 1. ボードの空いているマスに安全に確定書き込み
+            if (y1 >= 0 && y1 < ROWS && x1 >= 0 && x1 < COLS && board[y1][x1] === TYPE_EMPTY) {
+                board[y1][x1] = currentPiece.type1;
             }
-            // ブロック2が落ちて、ブロック1が接地する場合
-            else if (!canFall1 && canFall2) {
-                if (board[y1][x1] === TYPE_EMPTY) {
-                    board[y1][x1] = t1; // 接地側を正確に固定
-                }
-                // 残ったブロック2を「単体モード」として1マス下に続行させる
-                currentPiece.x = x2;
-                currentPiece.y = y2 + 1;
-                currentPiece.type1 = t2; // type1に保持させる
-                currentPiece.isSingle = true;
-                return true;
-            }
-
-            return false;
-        }
-
-        function lockPiece() {
-            const coords = getPieceCoords(currentPiece);
-
-            for (let c of coords) {
-                if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS && board[c.y][c.x] === TYPE_EMPTY) {
-                    board[c.y][c.x] = c.type;
-                }
+            if (y2 >= 0 && y2 < ROWS && x2 >= 0 && x2 < COLS && board[y2][x2] === TYPE_EMPTY) {
+                board[y2][x2] = currentPiece.type2;
             }
 
             endSoftDrop();
-            processClearsAndGravity(() => {
-                spawnNewPiece();
-                updateUI();
+            currentPiece = null; // 操作オブジェクトを一度解除
+
+            // 2. ボード全体に対して物理落下（空きマスへの自動詰め）を即時実行
+            applyGravityWithAnimation(() => {
+                // 3. 落下完了後に消去判定＆次のツモ生成
+                processClearsAndGravity(() => {
+                    spawnNewPiece();
+                    updateUI();
+                });
             });
         }
 
@@ -913,8 +852,8 @@
         }
 
         function movePiece(dx, dy) {
-            if (isGameOver || isPaused) return;
-            if (isValidPosition(currentPiece, currentPiece.x + dx, currentPiece.y + dy)) {
+            if (isGameOver || isPaused || !currentPiece) return;
+            if (isValidPosition(currentPiece.x + dx, currentPiece.y + dy, currentPiece.rot)) {
                 currentPiece.x += dx;
                 currentPiece.y += dy;
                 render();
@@ -924,13 +863,12 @@
         }
 
         function rotatePieceClockwise() {
-            if (isGameOver || isPaused) return;
-            if (currentPiece.isSingle) return; // 単体モード時は回転不可
+            if (isGameOver || isPaused || !currentPiece) return;
 
             let nextRot = (currentPiece.rot + 1) % 4;
             let kicks = [0, -1, 1, -2, 2];
             for (let k of kicks) {
-                if (isValidPosition(currentPiece, currentPiece.x + k, currentPiece.y, nextRot)) {
+                if (isValidPosition(currentPiece.x + k, currentPiece.y, nextRot)) {
                     currentPiece.x += k;
                     currentPiece.rot = nextRot;
                     render();
@@ -951,7 +889,12 @@
             }
 
             if (currentPiece && !isGameOver && !isPaused) {
-                const coords = getPieceCoords(currentPiece);
+                const off = getOffset(currentPiece.rot);
+                const coords = [
+                    {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type1},
+                    {x: currentPiece.x + off.dx, y: currentPiece.y + off.dy, type: currentPiece.type2}
+                ];
+
                 for (let c of coords) {
                     if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
                         const cellEl = document.getElementById(`cell-${c.y}-${c.x}`);
@@ -1031,4 +974,3 @@
     </script>
 </body>
 </html>
-
