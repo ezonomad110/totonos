@@ -1,11 +1,7 @@
-ご指摘いただいた3点を修正しました！
- * ととのいフェーズの誤動作修正:
-   * 緑色のととのいブロックが2×2（4個）揃っていないのに勝手にサウナフェーズに戻ってしまう不具合を修正しました。正方形の判定ロジックが確実に4個の連結を検知した場合のみ、サウナフェーズへの復帰（またはお邪魔全消し）が行われるように修正しています。
- * 操作ボタン位置の変更:
-   * スマホ用タッチ操作ボタンの配置を変更し、「回転 (↻ 90°)」ボタンと「落下 (▼)」ボタンの位置を入れ替えました（左から：◀、▶、▼、↻ 90°）。
- * ブロック消去時の演出（ディレイ追加）:
-   * ブロックが消える際に一瞬（約350ms）フェードや点滅などの「間（タメ）」を挟む演出を加え、消去が発生したことが視覚的にわかりやすく、気持ちよくプレイできるように改善しました。
-以下の完全版コードをコピーして index.html に上書き保存してください。
+防ぐためには、「水風呂フェーズの消去が起きたときは、その回の連鎖ループではととのいフェーズの消去判定を行わず、一度プレイヤーに操作権を渡す（フェーズを確定させる）」ようにする必要があります。
+修正版スクリプトの該当部分の考え方：
+processClearsAndGravity の中で、フェーズに応じた消去判定をその時の currentPhase に厳密に一致させ、水風呂クリア時はそこで一旦チェーンを区切るようにします。
+以下の修正済みの完全版コードをコピーして index.html に上書き保存してください。この修正により、水風呂クリア後は必ず「ととのいフェーズ」に移行し、緑ブロックの配置ターンが始まります。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -114,7 +110,7 @@
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン（落下と回転を入れ替え） -->
+    <!-- スマートフォン用タッチ操作ボタン -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-2">
         <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">◀</button>
         <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▶</button>
@@ -358,20 +354,22 @@
 
         function processClearsAndGravity(onComplete) {
             function stepChain() {
-                let currentCleared = false;
                 let clearedCoords = [];
+                let actionType = null;
 
+                // 現在のフェーズに応じたクリア判定のみを実行（誤爆を防ぐ）
                 if (currentPhase === PHASE_SAUNA) {
                     clearedCoords = getSaunaClearCoords();
+                    actionType = 'SAUNA';
                 } else if (currentPhase === PHASE_COLD) {
                     clearedCoords = getColdBathClearCoords();
+                    actionType = 'COLD';
                 } else if (currentPhase === PHASE_TOTONO) {
                     clearedCoords = getTotonoClearCoords();
+                    actionType = 'TOTONO';
                 }
 
                 if (clearedCoords.length > 0) {
-                    currentCleared = true;
-                    // 消去対象のブロックに演出用クラスを付与して一瞬止める
                     for (let cell of clearedCoords) {
                         const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
                         if (cellEl) cellEl.classList.add('clearing-anim');
@@ -382,37 +380,51 @@
                             board[cell.r][cell.c] = TYPE_EMPTY;
                         }
 
-                        if (currentPhase === PHASE_SAUNA) {
+                        if (actionType === 'SAUNA') {
                             score += clearedCoords.length * 10;
                             scoreEl.textContent = score;
                             showFloatingMessage(`🔥 SAUNA CLEAR! 💧水風呂へ突入！`, window.innerWidth/2, 250, "text-blue-400");
                             saunaClearCount++;
-                            currentPhase = PHASE_COLD;
+                            currentPhase = PHASE_COLD; // 水風呂フェーズへ確実に移行
                             updateUI();
-                        } else if (currentPhase === PHASE_COLD) {
+                            // 水風呂へ移行した直後は、この連鎖ステップをここで一旦終了し、プレイヤー操作へ移る
+                            applyGravity();
+                            render();
+                            onComplete();
+                            return;
+                        } else if (actionType === 'COLD') {
                             score += clearedCoords.length * 20;
                             scoreEl.textContent = score;
                             showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
-                            currentPhase = PHASE_TOTONO;
+                            currentPhase = PHASE_TOTONO; // ととのいフェーズへ確実に移行
                             totovnoTurnsRemaining = 3;
                             nextPiece = generateRandomPiece();
                             updateUI();
-                        } else if (currentPhase === PHASE_TOTONO) {
+                            // 水風呂クリア直後も連鎖を一旦止め、ととのいフェーズのブロック配置権を渡す
+                            applyGravity();
+                            render();
+                            onComplete();
+                            return;
+                        } else if (actionType === 'TOTONO') {
                             score += (clearedCoords.length / 4) * 300;
                             scoreEl.textContent = score;
                             showFloatingMessage(`🌿 TOTONO! 正方形成立！`, window.innerWidth/2, 250, "text-green-400");
                             removeAllJammers();
                             saunaClearCount = 0;
-                            currentPhase = PHASE_SAUNA;
+                            currentPhase = PHASE_SAUNA; // サウナフェーズへ復帰
                             totovnoTurnsRemaining = 0;
                             nextPiece = generateRandomPiece();
                             updateUI();
+                            applyGravity();
+                            render();
+                            onComplete();
+                            return;
                         }
 
                         applyGravity();
                         render();
                         setTimeout(stepChain, 200);
-                    }, 350); // 消去エフェクトのディレイ時間
+                    }, 350);
                 } else {
                     onComplete();
                 }
@@ -420,7 +432,6 @@
             stepChain();
         }
 
-        // ① サウナフェーズ消去座標検出
         function getSaunaClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
             let toClear = [];
@@ -459,7 +470,6 @@
             return toClear;
         }
 
-        // ② 水風呂フェーズ消去座標検出 (横一列フル＋上下連続)
         function getColdBathClearCoords() {
             let fullColdRows = [];
             for (let r = 0; r < ROWS; r++) {
@@ -503,7 +513,6 @@
             return coords;
         }
 
-        // ③ ととのいフェーズ消去座標検出 (縦2×横2正方形のみ)
         function getTotonoClearCoords() {
             let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
             let foundSquare = false;
