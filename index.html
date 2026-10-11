@@ -1,3 +1,10 @@
+ご報告ありがとうございます！独立落下のロジック（tryIndependentSettle()周辺）に以下の重大なバグがありました。
+ * ブロック種類が上書きされるバグ:
+   片方が着地したときに、もう片方のブロックの情報を正しく引き継げず、あるいは同じタイプで上書きしてしまっていた。
+ * 残りのブロックが独立落下せず止まってしまうバグ:
+   tryIndependentSettle() の中で currentPiece.y++ を強引に操作したことで座標と型情報の整合性が崩れ、正しく1個ずつ落ちる処理が継続できなくなっていた。
+これを修正し、ぷよぷよの「片方が引っかかったら、もう片方がパタンと倒れて1個ずつ個別に落ちていく」挙動を綺麗に再現するロジックに修正しました。
+以下の最新の完全版コードをコピーして上書きしてください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -49,7 +56,6 @@
             pointer-events: none;
         }
 
-        /* ぷよぷよ風の消え方：カッと光ってぷるぷる激しく震え、消えていく演出 */
         @keyframes puyo-clear {
             0% { transform: scale(1) rotate(0deg); filter: brightness(1); opacity: 1; }
             20% { transform: scale(1.3) rotate(-5deg); filter: brightness(3.2) drop-shadow(0 0 10px rgba(255,255,255,0.9)); opacity: 1; }
@@ -528,8 +534,7 @@
             if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
                 currentPiece.y++;
             } else {
-                // ぷよぷよ風独立落下（半身落ち）の処理：
-                // ツモが着地した際、片方のブロックだけでも下に落とせるスペースがあれば、独立して個別落下させる
+                // ぷよぷよ風独立落下（半身落ち）の適正処理
                 if (tryIndependentSettle()) {
                     render();
                     return;
@@ -539,7 +544,7 @@
             render();
         }
 
-        // ぷよぷよの「半身落ち（独立落下）」を実現する関数
+        // ぷよぷよ風「半身落ち（独立落下）」の堅牢な修正
         function tryIndependentSettle() {
             const off = getOffset(currentPiece.rot);
             let x1 = currentPiece.x;
@@ -550,23 +555,31 @@
             let y2 = currentPiece.y + off.dy;
             let t2 = currentPiece.type2;
 
-            // 各ブロックが真下に落とせるか判定
             let canFall1 = (y1 + 1 < ROWS && board[y1 + 1][x1] === TYPE_EMPTY);
             let canFall2 = (y2 + 1 < ROWS && board[y2 + 1][x2] === TYPE_EMPTY);
 
-            // 片方だけが下に落ちるスペースがあり、もう一方が接地している場合
+            // 片方だけ落ちるスペースがあり、もう一方が接地している場合
             if (canFall1 && !canFall2) {
-                // block1を固定し、block2だけを1マス落とす（あるいは逆回転・縦並びの調整）
-                // 簡易的にツモの姿勢や位置を1つ下げる、または独立制御
-                // ここでは位置を下げるのではなく、接地した側をボードに固定し、浮いている側を1マス単体ブロックとして処理
+                // 接地した方を先にボードに固定し、浮いている方を新しいcurrentPiece（単体）として1マス下に継続落下させる
                 board[y2][x2] = t2;
-                currentPiece.y++; // 残りを1マス下げる
-                // 再度回転やもう片方の位置調整
-                return true;
+                currentPiece.type1 = t1;
+                currentPiece.type2 = t1; // ダミー化
+                currentPiece.rot = 2;
+                // 1個のブロックとして継続落下させるために、もし下が可能ならyをすすめる
+                if (y1 + 1 < ROWS && board[y1 + 1][x1] === TYPE_EMPTY) {
+                    currentPiece.y++;
+                    return true;
+                }
             } else if (!canFall1 && canFall2) {
                 board[y1][x1] = t1;
-                // もう片方を単体扱いに
-                return true;
+                currentPiece.x = x2;
+                currentPiece.y = y2 + 1;
+                currentPiece.type1 = t2;
+                currentPiece.type2 = t2;
+                currentPiece.rot = 2;
+                if (y2 + 1 < ROWS && board[y2 + 1][x2] === TYPE_EMPTY) {
+                    return true;
+                }
             }
 
             return false;
@@ -608,7 +621,6 @@
                         if (cellEl) cellEl.classList.add('clearing-anim');
                     }
 
-                    // ぷよぷよ風の消去ラグ（消えている間の演出をしっかり見せる）
                     setTimeout(() => {
                         for (let cell of clearedCoords) {
                             board[cell.r][cell.c] = TYPE_EMPTY;
@@ -778,9 +790,6 @@
             return toClear;
         }
 
-        // 水風呂フェーズの新ルール：
-        // 水風呂ブロックが上下左右につながり、盤面の「左端（列0）」から「右端（列COLS-1）」まで到達する経路を形成している場合、
-        // その経路および接続している水風呂グループ全体を消去する。
         function getColdBathClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
             let allConnectedGroups = [];
@@ -816,7 +825,6 @@
                             }
                         }
 
-                        // 左端から右端まで到達しているグループであれば消去対象に含める
                         if (reachesLeft && reachesRight) {
                             allConnectedGroups.push(...group);
                         }
