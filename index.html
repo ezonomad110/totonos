@@ -133,7 +133,7 @@
         <div id="board-container" class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-red-500 transition-all duration-300" style="width: calc(min(82vw, 280px) + 16px); height: calc(min(123vw, 420px) + 16px);">
             <!-- グリッドボード (8列 × 12行) -->
             <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg w-full h-full relative">
-                <!-- JSで動的生成 -->
+                <!-- JSで動적生成 -->
             </div>
 
             <!-- ゲームオーバー / スタート / 一時停止 オーバーレイ -->
@@ -778,9 +778,10 @@
             return coords;
         }
 
-        // 修正：4個以上つながっているグループを見つけたら、そのグループ全体（5個以上であっても全て）を消去対象として返す
+        // 修正：すべての緑の塊をスキャンし、4個以上の塊が見つかったらその最大の塊を確実に全て取得する
         function getTotonoClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let largestGroup = [];
 
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
@@ -808,7 +809,10 @@
                         }
 
                         if (group.length >= 4) {
-                            return group; // 結合しているすべてのブロックをまとめて消去
+                            // 条件を満たすグループが見つかったら即座にそれを採用して全消去
+                            return group;
+                        } else if (group.length > largestGroup.length) {
+                            largestGroup = group;
                         }
                     }
                 }
@@ -953,4 +957,3 @@
     </script>
 </body>
 </html>
-
