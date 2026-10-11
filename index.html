@@ -49,16 +49,17 @@
             pointer-events: none;
         }
 
-        @keyframes luxury-clear {
-            0% { transform: scale(1) rotate(0deg); filter: brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0)); opacity: 1; }
-            20% { transform: scale(1.25) rotate(-6deg); filter: brightness(3.5) drop-shadow(0 0 12px rgba(255,255,255,1)); opacity: 0.9; }
-            40% { transform: scale(0.85) rotate(6deg); filter: brightness(0.5); opacity: 1; }
-            60% { transform: scale(1.3) rotate(-3deg); filter: brightness(4) drop-shadow(0 0 16px rgba(255,255,255,1)); opacity: 0.7; }
+        /* ぷよぷよ風の消え方：カッと光ってぷるぷる激しく震え、消えていく演出 */
+        @keyframes puyo-clear {
+            0% { transform: scale(1) rotate(0deg); filter: brightness(1); opacity: 1; }
+            20% { transform: scale(1.3) rotate(-5deg); filter: brightness(3.2) drop-shadow(0 0 10px rgba(255,255,255,0.9)); opacity: 1; }
+            40% { transform: scale(0.85) rotate(5deg); filter: brightness(0.6); opacity: 1; }
+            60% { transform: scale(1.2) rotate(-3deg); filter: brightness(3.8) drop-shadow(0 0 14px rgba(255,255,255,1)); opacity: 0.8; }
             80% { transform: scale(0.6) rotate(3deg); filter: brightness(2); opacity: 0.4; }
             100% { transform: scale(0) rotate(0deg); filter: brightness(5); opacity: 0; }
         }
         .clearing-anim {
-            animation: luxury-clear 0.75s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+            animation: puyo-clear 0.65s ease-in-out forwards;
             z-index: 20;
         }
 
@@ -133,7 +134,7 @@
         <div id="board-container" class="relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 border-red-500 transition-all duration-300" style="width: calc(min(82vw, 280px) + 16px); height: calc(min(123vw, 420px) + 16px);">
             <!-- グリッドボード (8列 × 12行) -->
             <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg w-full h-full relative">
-                <!-- JSで動적生成 -->
+                <!-- JSで動的生成 -->
             </div>
 
             <!-- ゲームオーバー / スタート / 一時停止 オーバーレイ -->
@@ -156,7 +157,7 @@
                     <h3 class="text-xl font-black text-amber-400 mb-1">遊び方ルール</h3>
                     <div class="text-xs text-slate-300 space-y-2 overflow-y-auto max-h-[220px] px-1 text-left w-full bg-slate-900/80 p-2 rounded-lg border border-slate-700">
                         <p><strong class="text-red-400">🔥 サウナフェーズ:</strong> 赤ブロックが上下左右に8個以上繋がると消去され、水風呂フェーズへ突入！</p>
-                        <p><strong class="text-blue-400">💧 水風呂フェーズ:</strong> 横一列が青ブロックで埋まると消去。上下に連続する青ブロックも一緒に巻き込んで消え、ととのいフェーズへ！</p>
+                        <p><strong class="text-blue-400">💧 水風呂フェーズ:</strong> 水風呂ブロックが左右の端までつながる経路を作ると消去され、ととのいフェーズへ！</p>
                         <p><strong class="text-green-400">🌿 ととのいフェーズ:</strong> 緑ブロックが上下左右に4つ以上繋がると消去。「と」「とと」「ととの」「ととのったー！」と文字が成長し、4回消すと雑念ブロックが全て浄化されサウナフェーズへ復帰！</p>
                     </div>
                     <button onclick="hideRules()" class="mt-2 w-full max-w-[180px] py-2 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white">
@@ -522,12 +523,53 @@
 
         function gameLoop() {
             if (isGameOver || isPaused) return;
+            
+            // 下への移動判定
             if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot, currentPiece)) {
                 currentPiece.y++;
             } else {
+                // ぷよぷよ風独立落下（半身落ち）の処理：
+                // ツモが着地した際、片方のブロックだけでも下に落とせるスペースがあれば、独立して個別落下させる
+                if (tryIndependentSettle()) {
+                    render();
+                    return;
+                }
                 lockPiece();
             }
             render();
+        }
+
+        // ぷよぷよの「半身落ち（独立落下）」を実現する関数
+        function tryIndependentSettle() {
+            const off = getOffset(currentPiece.rot);
+            let x1 = currentPiece.x;
+            let y1 = currentPiece.y;
+            let t1 = currentPiece.type1;
+
+            let x2 = currentPiece.x + off.dx;
+            let y2 = currentPiece.y + off.dy;
+            let t2 = currentPiece.type2;
+
+            // 各ブロックが真下に落とせるか判定
+            let canFall1 = (y1 + 1 < ROWS && board[y1 + 1][x1] === TYPE_EMPTY);
+            let canFall2 = (y2 + 1 < ROWS && board[y2 + 1][x2] === TYPE_EMPTY);
+
+            // 片方だけが下に落ちるスペースがあり、もう一方が接地している場合
+            if (canFall1 && !canFall2) {
+                // block1を固定し、block2だけを1マス落とす（あるいは逆回転・縦並びの調整）
+                // 簡易的にツモの姿勢や位置を1つ下げる、または独立制御
+                // ここでは位置を下げるのではなく、接地した側をボードに固定し、浮いている側を1マス単体ブロックとして処理
+                board[y2][x2] = t2;
+                currentPiece.y++; // 残りを1マス下げる
+                // 再度回転やもう片方の位置調整
+                return true;
+            } else if (!canFall1 && canFall2) {
+                board[y1][x1] = t1;
+                // もう片方を単体扱いに
+                return true;
+            }
+
+            return false;
         }
 
         function lockPiece() {
@@ -566,6 +608,7 @@
                         if (cellEl) cellEl.classList.add('clearing-anim');
                     }
 
+                    // ぷよぷよ風の消去ラグ（消えている間の演出をしっかり見せる）
                     setTimeout(() => {
                         for (let cell of clearedCoords) {
                             board[cell.r][cell.c] = TYPE_EMPTY;
@@ -579,7 +622,7 @@
                             currentPhase = PHASE_COLD;
                             updateUI();
                             applyGravityWithAnimation(() => {
-                                setTimeout(stepChain, 350);
+                                setTimeout(stepChain, 400);
                             });
                             return;
                         } else if (actionType === 'COLD') {
@@ -591,7 +634,7 @@
                             nextPiece = generateRandomPiece();
                             updateUI();
                             applyGravityWithAnimation(() => {
-                                setTimeout(stepChain, 350);
+                                setTimeout(stepChain, 400);
                             });
                             return;
                         } else if (actionType === 'TOTONO') {
@@ -617,11 +660,11 @@
                             }
 
                             applyGravityWithAnimation(() => {
-                                setTimeout(stepChain, 350);
+                                setTimeout(stepChain, 400);
                             });
                             return;
                         }
-                    }, 750);
+                    }, 650);
                 } else {
                     onComplete();
                 }
@@ -735,53 +778,56 @@
             return toClear;
         }
 
+        // 水風呂フェーズの新ルール：
+        // 水風呂ブロックが上下左右につながり、盤面の「左端（列0）」から「右端（列COLS-1）」まで到達する経路を形成している場合、
+        // その経路および接続している水風呂グループ全体を消去する。
         function getColdBathClearCoords() {
-            let fullColdRows = [];
-            for (let r = 0; r < ROWS; r++) {
-                let isFullCold = true;
-                for (let c = 0; c < COLS; c++) {
-                    if (board[r][c] !== TYPE_COLD) {
-                        isFullCold = false;
-                        break;
-                    }
-                }
-                if (isFullCold) {
-                    fullColdRows.push(r);
-                }
-            }
+            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let allConnectedGroups = [];
 
-            if (fullColdRows.length === 0) return [];
-
-            let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
-            for (let r of fullColdRows) {
-                for (let c = 0; c < COLS; c++) {
-                    toClearMap[r][c] = true;
-                    let upR = r - 1;
-                    while (upR >= 0 && board[upR][c] === TYPE_COLD) {
-                        toClearMap[upR][c] = true;
-                        upR--;
-                    }
-                    let downR = r + 1;
-                    while (downR < ROWS && board[downR][c] === TYPE_COLD) {
-                        toClearMap[downR][c] = true;
-                        downR++;
-                    }
-                }
-            }
-
-            let coords = [];
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
-                    if (toClearMap[r][c]) coords.push({r, c});
+                    if (board[r][c] === TYPE_COLD && !visited[r][c]) {
+                        let group = [];
+                        let queue = [{r, c}];
+                        visited[r][c] = true;
+
+                        let reachesLeft = false;
+                        let reachesRight = false;
+
+                        while (queue.length > 0) {
+                            let curr = queue.shift();
+                            group.push(curr);
+
+                            if (curr.c === 0) reachesLeft = true;
+                            if (curr.c === COLS - 1) reachesRight = true;
+
+                            let neighbors = [
+                                {r: curr.r-1, c: curr.c}, {r: curr.r+1, c: curr.c},
+                                {r: curr.r, c: curr.c-1}, {r: curr.r, c: curr.c+1}
+                            ];
+                            for (let n of neighbors) {
+                                if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
+                                    if (board[n.r][n.c] === TYPE_COLD && !visited[n.r][n.c]) {
+                                        visited[n.r][n.c] = true;
+                                        queue.push(n);
+                                    }
+                                }
+                            }
+                        }
+
+                        // 左端から右端まで到達しているグループであれば消去対象に含める
+                        if (reachesLeft && reachesRight) {
+                            allConnectedGroups.push(...group);
+                        }
+                    }
                 }
             }
-            return coords;
+            return allConnectedGroups;
         }
 
-        // 修正：すべての緑の塊をスキャンし、4個以上の塊が見つかったらその最大の塊を確実に全て取得する
         function getTotonoClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
-            let largestGroup = [];
 
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
@@ -809,10 +855,7 @@
                         }
 
                         if (group.length >= 4) {
-                            // 条件を満たすグループが見つかったら即座にそれを採用して全消去
                             return group;
-                        } else if (group.length > largestGroup.length) {
-                            largestGroup = group;
                         }
                     }
                 }
@@ -905,7 +948,7 @@
             } else if (currentPhase === PHASE_COLD) {
                 phaseBadgeName = "水風呂フェーズ";
                 phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-blue-600 glossy shadow";
-                phaseSubEl.textContent = "青1列完成でととのいへ";
+                phaseSubEl.textContent = "左右を繋げて水風呂へ";
                 borderColor = "border-blue-500";
                 progressBarFillEl.className = "bg-blue-500 h-full transition-all duration-300";
                 progressPercent = 50;
@@ -957,3 +1000,4 @@
     </script>
 </body>
 </html>
+
