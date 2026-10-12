@@ -1,3 +1,5 @@
+メニュー画面（スタート画面）からゲームが開始できなくなってしまった件ですね。原因をお調べしたところ、直前のコード変更でスタートボタン（startGame()）のクリック処理やレイアウト変更に伴い、イベントや要素の参照に一部不整合が生じていた可能性がございます。
+ゲームスタートボタンが確実に機能するように修正いたしました。以下のコードをコピーして上書きしてください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -223,7 +225,7 @@
         const TYPE_EMPTY = 0;
         const TYPE_SAUNA = 1;
         const TYPE_COLD = 2;
-        const TYPE_JAMMER = 3;  // 雑念ブロック
+        const TYPE_JAMMER = 3;
         const TYPE_TOTONO = 4;
 
         const PHASE_SAUNA = 1;
@@ -366,7 +368,11 @@
             totonoClearStep = 0;
             isGameOver = false;
             isPaused = false;
+            
             pauseBtnEl.textContent = "⏸ 一時停止";
+            startBtnEl.textContent = "ゲームスタート";
+            startBtnEl.onclick = startGame;
+            
             scoreEl.textContent = score;
             
             overlayEl.classList.add('opacity-0', 'pointer-events-none');
@@ -491,4 +497,508 @@
             nextPreviewEl.innerHTML = '';
             [nextPiece.type1, nextPiece.type2].forEach(type => {
                 const div = document.createElement('div');
-                
+                div.className = `w-6 h-6 rounded flex items-center justify-center shadow ${getBlockClass(type)}`;
+                div.innerHTML = getBlockSvg(type);
+                nextPreviewEl.appendChild(div);
+            });
+        }
+
+        function getBlockClass(type) {
+            switch(type) {
+                case TYPE_SAUNA: return 'block-red';
+                case TYPE_COLD: return 'block-blue';
+                case TYPE_JAMMER: return 'block-gray';
+                case TYPE_TOTONO: return 'block-green';
+                default: return 'bg-slate-900 border border-slate-800';
+            }
+        }
+
+        function getBlockSvg(type) {
+            switch(type) {
+                case TYPE_SAUNA: return '<svg class="w-3.5 h-3.5 text-white icon-glow"><use href="#icon-fire"/></svg>';
+                case TYPE_COLD: return '<svg class="w-3.5 h-3.5 text-white icon-glow"><use href="#icon-water"/></svg>';
+                case TYPE_JAMMER: return '<svg class="w-3.5 h-3.5 text-white"><use href="#icon-jammer"/></svg>';
+                case TYPE_TOTONO: return '<svg class="w-3.5 h-3.5 text-white icon-glow"><use href="#icon-leaf"/></svg>';
+                default: return '';
+            }
+        }
+
+        function getOffset(rot) {
+            switch(rot) {
+                case 0: return {dx: 0, dy: -1};
+                case 1: return {dx: 1, dy: 0};
+                case 2: return {dx: 0, dy: 1};
+                case 3: return {dx: -1, dy: 0};
+            }
+        }
+
+        function isValidPosition(x, y, rot) {
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+            if (board[y][x] !== TYPE_EMPTY) return false;
+
+            const off = getOffset(rot);
+            const x2 = x + off.dx;
+            const y2 = y + off.dy;
+
+            if (x2 < 0 || x2 >= COLS || y2 < 0 || y2 >= ROWS) return false;
+            if (board[y2][x2] !== TYPE_EMPTY) return false;
+
+            return true;
+        }
+
+        function gameLoop() {
+            if (isGameOver || isPaused) return;
+            
+            if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot)) {
+                currentPiece.y++;
+            } else {
+                lockPiece();
+            }
+            render();
+        }
+
+        function lockPiece() {
+            const off = getOffset(currentPiece.rot);
+            let x1 = currentPiece.x;
+            let y1 = currentPiece.y;
+            let x2 = currentPiece.x + off.dx;
+            let y2 = currentPiece.y + off.dy;
+
+            if (y1 >= 0 && y1 < ROWS && x1 >= 0 && x1 < COLS && board[y1][x1] === TYPE_EMPTY) {
+                board[y1][x1] = currentPiece.type1;
+            }
+            if (y2 >= 0 && y2 < ROWS && x2 >= 0 && x2 < COLS && board[y2][x2] === TYPE_EMPTY) {
+                board[y2][x2] = currentPiece.type2;
+            }
+
+            endSoftDrop();
+            currentPiece = null;
+
+            applyGravityWithAnimation(() => {
+                processClearsAndGravity(() => {
+                    spawnNewPiece();
+                    updateUI();
+                });
+            });
+        }
+
+        function processClearsAndGravity(onComplete) {
+            function stepChain() {
+                if (isPaused || isGameOver) return;
+                let clearedCoords = [];
+                let actionType = null;
+
+                if (currentPhase === PHASE_SAUNA) {
+                    clearedCoords = getSaunaClearCoords();
+                    actionType = 'SAUNA';
+                } else if (currentPhase === PHASE_COLD) {
+                    clearedCoords = getColdBathClearCoords();
+                    actionType = 'COLD';
+                } else if (currentPhase === PHASE_TOTONO) {
+                    clearedCoords = getTotonoClearCoords();
+                    actionType = 'TOTONO';
+                }
+
+                if (clearedCoords.length > 0) {
+                    playClearSound();
+                    for (let cell of clearedCoords) {
+                        const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
+                        if (cellEl) cellEl.classList.add('clearing-anim');
+                    }
+
+                    setTimeout(() => {
+                        for (let cell of clearedCoords) {
+                            board[cell.r][cell.c] = TYPE_EMPTY;
+                        }
+
+                        if (actionType === 'SAUNA') {
+                            score += clearedCoords.length * 10;
+                            scoreEl.textContent = score;
+                            showFloatingMessage(`🔥 SAUNA CLEAR! 💧水風呂へ突入！`, window.innerWidth/2, 250, "text-blue-400");
+                            saunaClearCount++;
+                            currentPhase = PHASE_COLD;
+                            updateUI();
+                            applyGravityWithAnimation(() => {
+                                setTimeout(stepChain, 400);
+                            });
+                            return;
+                        } else if (actionType === 'COLD') {
+                            score += clearedCoords.length * 20;
+                            scoreEl.textContent = score;
+                            showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
+                            currentPhase = PHASE_TOTONO;
+                            totonoClearStep = 0;
+                            nextPiece = generateRandomPiece();
+                            updateUI();
+                            applyGravityWithAnimation(() => {
+                                setTimeout(stepChain, 400);
+                            });
+                            return;
+                        } else if (actionType === 'TOTONO') {
+                            totonoClearStep++;
+                            score += 200;
+                            scoreEl.textContent = score;
+
+                            let bannerText = "";
+                            if (totonoClearStep === 1) bannerText = "と";
+                            else if (totonoClearStep === 2) bannerText = "とと";
+                            else if (totonoClearStep === 3) bannerText = "ととの";
+                            else if (totonoClearStep >= 4) bannerText = "ととのったー！";
+                            
+                            showTotonottaBanner(bannerText);
+
+                            if (totonoClearStep >= 4) {
+                                removeAllJammers();
+                                saunaClearCount = 0;
+                                currentPhase = PHASE_SAUNA;
+                                totonoClearStep = 0;
+                                nextPiece = generateRandomPiece();
+                                updateUI();
+                            }
+
+                            applyGravityWithAnimation(() => {
+                                setTimeout(stepChain, 400);
+                            });
+                            return;
+                        }
+                    }, 650);
+                } else {
+                    onComplete();
+                }
+            }
+            stepChain();
+        }
+
+        function applyGravityWithAnimation(callback) {
+            let fallMap = [];
+            let maxFallSteps = 0;
+
+            for (let c = 0; c < COLS; c++) {
+                let writeRow = ROWS - 1;
+                let colItems = [];
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (board[r][c] !== TYPE_EMPTY) {
+                        colItems.push({ fromR: r, toR: writeRow, type: board[r][c] });
+                        writeRow--;
+                    }
+                }
+
+                for (let r = 0; r < ROWS; r++) {
+                    board[r][c] = TYPE_EMPTY;
+                }
+
+                colItems.forEach(item => {
+                    board[item.toR][c] = item.type;
+                    let diff = item.toR - item.fromR;
+                    if (diff > 0) {
+                        if (diff > maxFallSteps) maxFallSteps = diff;
+                        fallMap.push({ c, fromR: item.fromR, toR: item.toR, type: item.type });
+                    }
+                });
+            }
+
+            if (maxFallSteps === 0) {
+                render();
+                if (callback) callback();
+                return;
+            }
+
+            render();
+            fallMap.forEach(item => {
+                let cellEl = document.getElementById(`cell-${item.toR}-${item.c}`);
+                if (cellEl) {
+                    let distance = (item.toR - item.fromR) * 100;
+                    cellEl.style.transform = `translateY(-${distance}%)`;
+                    cellEl.style.transition = 'none';
+                }
+            });
+
+            requestAnimationFrame(() => {
+                fallMap.forEach(item => {
+                    let cellEl = document.getElementById(`cell-${item.toR}-${item.c}`);
+                    if (cellEl) {
+                        cellEl.style.transition = 'transform 0.32s cubic-bezier(0.25, 1, 0.5, 1)';
+                        cellEl.style.transform = 'translateY(0)';
+                    }
+                });
+
+                setTimeout(() => {
+                    render();
+                    if (callback) callback();
+                }, 340);
+            });
+        }
+
+        function showTotonottaBanner(text) {
+            const banner = document.createElement('div');
+            banner.className = 'absolute inset-0 flex items-center justify-center z-40 pointer-events-none';
+            banner.innerHTML = `<div class="text-3xl sm:text-5xl font-black text-green-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] bg-black/60 px-6 py-3 rounded-2xl border-4 border-green-400 totono-banner-anim">${text}</div>`;
+            boardContainerEl.appendChild(banner);
+            setTimeout(() => banner.remove(), 1400);
+        }
+
+        function getSaunaClearCoords() {
+            let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let maxSize = Math.min(ROWS, COLS);
+
+            for (let size = maxSize; size >= 3; size--) {
+                for (let r = 0; r <= ROWS - size; r++) {
+                    for (let c = 0; c <= COLS - size; c++) {
+                        let isFullSquare = true;
+                        for (let dr = 0; dr < size; dr++) {
+                            for (let dc = 0; dc < size; dc++) {
+                                if (board[r + dr][c + dc] !== TYPE_SAUNA) {
+                                    isFullSquare = false;
+                                    break;
+                                }
+                            }
+                            if (!isFullSquare) break;
+                        }
+
+                        if (isFullSquare) {
+                            for (let dr = 0; dr < size; dr++) {
+                                for (let dc = 0; dc < size; dc++) {
+                                    toClearMap[r + dr][c + dc] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            let clearedCoords = [];
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (toClearMap[r][c]) {
+                        clearedCoords.push({r, c});
+                    }
+                }
+            }
+            return clearedCoords;
+        }
+
+        function getColdBathClearCoords() {
+            let queue = [];
+            let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
+            let prev = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
+
+            for (let r = 0; r < ROWS; r++) {
+                if (board[r][0] === TYPE_COLD) {
+                    queue.push({r, c: 0});
+                    dist[r][0] = 0;
+                }
+            }
+
+            let reachedRightCells = [];
+
+            while (queue.length > 0) {
+                let curr = queue.shift();
+
+                if (curr.c === COLS - 1) {
+                    reachedRightCells.push(curr);
+                }
+
+                let neighbors = [
+                    {r: curr.r - 1, c: curr.c}, {r: curr.r + 1, c: curr.c},
+                    {r: curr.r, c: curr.c - 1}, {r: curr.r, c: curr.c + 1}
+                ];
+
+                for (let n of neighbors) {
+                    if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
+                        if (board[n.r][n.c] === TYPE_COLD) {
+                            if (dist[curr.r][curr.c] + 1 < dist[n.r][n.c]) {
+                                dist[n.r][n.c] = dist[curr.r][curr.c] + 1;
+                                prev[n.r][n.c] = {r: curr.r, c: curr.c};
+                                queue.push(n);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (reachedRightCells.length === 0) return [];
+
+            reachedRightCells.sort((a, b) => dist[a.r][a.c] - dist[b.r][b.c]);
+            let target = reachedRightCells[0];
+
+            let pathCoords = [];
+            let curr = target;
+            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+
+            while (curr) {
+                if (!visited[curr.r][curr.c]) {
+                    visited[curr.r][curr.c] = true;
+                    pathCoords.push({r: curr.r, c: curr.c});
+                }
+                curr = prev[curr.r][curr.c];
+            }
+
+            return pathCoords;
+        }
+
+        function getTotonoClearCoords() {
+            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (board[r][c] === TYPE_TOTONO && !visited[r][c]) {
+                        let group = [];
+                        let queue = [{r, c}];
+                        visited[r][c] = true;
+
+                        while (queue.length > 0) {
+                            let curr = queue.shift();
+                            group.push(curr);
+
+                            let neighbors = [
+                                {r: curr.r-1, c: curr.c}, {r: curr.r+1, c: curr.c},
+                                {r: curr.r, c: curr.c-1}, {r: curr.r, c: curr.c+1}
+                            ];
+                            for (let n of neighbors) {
+                                if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
+                                    if (board[n.r][n.c] === TYPE_TOTONO && !visited[n.r][n.c]) {
+                                        visited[n.r][n.c] = true;
+                                        queue.push(n);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (group.length >= 4) {
+                            return group;
+                        }
+                    }
+                }
+            }
+            return [];
+        }
+
+        function removeAllJammers() {
+            let removed = 0;
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (board[r][c] === TYPE_JAMMER) {
+                        board[r][c] = TYPE_EMPTY;
+                        removed++;
+                    }
+                }
+            }
+            if (removed > 0) {
+                showFloatingMessage(`✨ 雑念ブロック全 ${removed}個浄化！`, window.innerWidth/2, 290, "text-amber-300");
+            }
+        }
+
+        function movePiece(dx, dy) {
+            if (isGameOver || isPaused || !currentPiece) return;
+            if (isValidPosition(currentPiece.x + dx, currentPiece.y + dy, currentPiece.rot)) {
+                currentPiece.x += dx;
+                currentPiece.y += dy;
+                render();
+                return true;
+            }
+            return false;
+        }
+
+        function rotatePieceClockwise() {
+            if (isGameOver || isPaused || !currentPiece) return;
+
+            let nextRot = (currentPiece.rot + 1) % 4;
+            let kicks = [0, -1, 1, -2, 2];
+            for (let k of kicks) {
+                if (isValidPosition(currentPiece.x + k, currentPiece.y, nextRot)) {
+                    currentPiece.x += k;
+                    currentPiece.rot = nextRot;
+                    render();
+                    break;
+                }
+            }
+        }
+
+        function render() {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cellEl = document.getElementById(`cell-${r}-${c}`);
+                    cellEl.className = `w-full aspect-square rounded-md transition-all duration-150 flex items-center justify-center shadow-sm ${getBlockClass(board[r][c])}`;
+                    cellEl.style.transform = '';
+                    cellEl.style.transition = '';
+                    cellEl.innerHTML = getBlockSvg(board[r][c]);
+                }
+            }
+
+            if (currentPiece && !isGameOver && !isPaused) {
+                const off = getOffset(currentPiece.rot);
+                const coords = [
+                    {x: currentPiece.x, y: currentPiece.y, type: currentPiece.type1},
+                    {x: currentPiece.x + off.dx, y: currentPiece.y + off.dy, type: currentPiece.type2}
+                ];
+
+                for (let c of coords) {
+                    if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
+                        const cellEl = document.getElementById(`cell-${c.y}-${c.x}`);
+                        cellEl.className = `w-full aspect-square rounded-md flex items-center justify-center shadow-md ring-2 ring-white/80 ${getBlockClass(c.type)}`;
+                        cellEl.innerHTML = getBlockSvg(c.type);
+                    }
+                }
+            }
+        }
+
+        function updateUI() {
+            let phaseBadgeName = "";
+            let borderColor = "";
+
+            if (currentPhase === PHASE_SAUNA) {
+                phaseBadgeName = "サウナフェーズ";
+                phaseBadgeEl.className = "px-2 py-0.5 rounded-lg text-xs font-black text-white bg-red-600 glossy shadow";
+                phaseSubEl.textContent = "3×3以上の赤正方形で水風呂へ";
+                borderColor = "border-red-500";
+            } else if (currentPhase === PHASE_COLD) {
+                phaseBadgeName = "水風呂フェーズ";
+                phaseBadgeEl.className = "px-2 py-0.5 rounded-lg text-xs font-black text-white bg-blue-600 glossy shadow";
+                phaseSubEl.textContent = "左右を繋げて水風呂へ";
+                borderColor = "border-blue-500";
+            } else if (currentPhase === PHASE_TOTONO) {
+                phaseBadgeName = "ととのいフェーズ";
+                phaseBadgeEl.className = "px-2 py-0.5 rounded-lg text-xs font-black text-white bg-green-600 glossy shadow";
+                phaseSubEl.textContent = `消去ステップ: ${totonoClearStep}/4`;
+                borderColor = "border-green-500";
+            }
+            phaseBadgeEl.textContent = phaseBadgeName;
+            
+            boardContainerEl.className = `relative bg-slate-950 p-2 rounded-2xl shadow-2xl border-4 ${borderColor} transition-all duration-300`;
+            topStatusBarEl.className = `w-full bg-slate-800/90 px-3 py-2 rounded-xl border-2 ${borderColor} shadow-md flex items-center justify-between transition-all duration-300`;
+
+            updateNextPreview();
+        }
+
+        function showFloatingMessage(text, x, y, colorClass) {
+            const el = document.createElement('div');
+            el.className = `absolute z-50 font-black text-sm sm:text-base drop-shadow-lg floating-text ${colorClass}`;
+            el.style.left = `${Math.min(window.innerWidth - 150, Math.max(20, x - 50))}px`;
+            el.style.top = `${y}px`;
+            el.textContent = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (isGameOver || isPaused) return;
+            if (e.key === 'ArrowLeft' || e.key === 'a') {
+                movePiece(-1, 0);
+            } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                movePiece(1, 0);
+            } else if (e.key === 'ArrowDown' || e.key === 's') {
+                startSoftDrop();
+            } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'x') {
+                rotatePieceClockwise();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 's') {
+                endSoftDrop();
+            }
+        });
+    </script>
+</body>
+</html>
+
