@@ -1,9 +1,12 @@
+水風呂フェーズの「余分な接続ブロックの巻き込み消去を廃止し、条件を満たした最短/最小経路のみを消去する」仕様に基づき、ロジックを修正いたしました。
+上部ヘッダーの「v2.1」などのバージョン・履歴表記も削除しています。
+以下のコードをコピーして上書きしてください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOTONOS -トトノス- v2.0</title>
+    <title>TOTONOS -トトノス-</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
@@ -83,7 +86,7 @@
             🏠 ホーム
         </button>
         <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v2.0</span>
+            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス-</span>
         </h1>
         <button onclick="togglePause()" id="pause-btn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             ⏸ 一時停止
@@ -102,7 +105,7 @@
                     <div id="phase-badge" class="px-2 py-1 rounded-lg text-xs font-black text-white bg-red-600 glossy shadow">
                         サウナフェーズ
                     </div>
-                    <div id="phase-sub" class="text-[9px] text-slate-300 mt-0.5">赤8個連結で水風呂へ</div>
+                    <div id="phase-sub" class="text-[9px] text-slate-300 mt-0.5">3×3以上の赤正方形で水風呂へ</div>
                 </div>
 
                 <!-- スコア -->
@@ -142,7 +145,6 @@
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 2.0</p>
                     <p id="overlay-desc" class="text-xs text-slate-300 mb-5 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
                         ゲームスタート
@@ -156,7 +158,7 @@
                 <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-2">
                     <h3 class="text-xl font-black text-amber-400 mb-1">遊び方ルール</h3>
                     <div class="text-xs text-slate-300 space-y-2 overflow-y-auto max-h-[220px] px-1 text-left w-full bg-slate-900/80 p-2 rounded-lg border border-slate-700">
-                        <p><strong class="text-red-400">🔥 サウナフェーズ:</strong> 赤ブロックが上下左右に8個以上繋がると消去され、水風呂フェーズへ突入！</p>
+                        <p><strong class="text-red-400">🔥 サウナフェーズ:</strong> 赤ブロックで内部まで完全に埋まった3×3以上の正方形を作ると消去され、水風呂フェーズへ突入！</p>
                         <p><strong class="text-blue-400">💧 水風呂フェーズ:</strong> 水風呂ブロックが左右の端までつながる経路を作ると消去され、ととのいフェーズへ！</p>
                         <p><strong class="text-green-400">🌿 ととのいフェーズ:</strong> 緑ブロックが上下左右に4つ以上繋がると消去。「と」「とと」「ととの」「ととのったー！」と文字が成長し、4回消すと雑念ブロックが全て浄化されサウナフェーズへ復帰！</p>
                     </div>
@@ -527,13 +529,11 @@
             if (isValidPosition(currentPiece.x, currentPiece.y + 1, currentPiece.rot)) {
                 currentPiece.y++;
             } else {
-                // 着地処理：ボードへ確定後に重力一括落下
                 lockPiece();
             }
             render();
         }
 
-        // 確実で安全なロック＆独立落下処理
         function lockPiece() {
             const off = getOffset(currentPiece.rot);
             let x1 = currentPiece.x;
@@ -541,7 +541,6 @@
             let x2 = currentPiece.x + off.dx;
             let y2 = currentPiece.y + off.dy;
 
-            // 1. ボードの空いているマスに安全に確定書き込み
             if (y1 >= 0 && y1 < ROWS && x1 >= 0 && x1 < COLS && board[y1][x1] === TYPE_EMPTY) {
                 board[y1][x1] = currentPiece.type1;
             }
@@ -550,11 +549,9 @@
             }
 
             endSoftDrop();
-            currentPiece = null; // 操作オブジェクトを一度解除
+            currentPiece = null;
 
-            // 2. ボード全体に対して物理落下（空きマスへの自動詰め）を即時実行
             applyGravityWithAnimation(() => {
-                // 3. 落下完了後に消去判定＆次のツモ生成
                 processClearsAndGravity(() => {
                     spawnNewPiece();
                     updateUI();
@@ -717,86 +714,108 @@
             setTimeout(() => banner.remove(), 1400);
         }
 
+        // サウナフェーズ（3×3以上の正方形・内部まで完全充填）
         function getSaunaClearCoords() {
-            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
-            let toClear = [];
+            let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let maxSize = Math.min(ROWS, COLS);
 
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    if (board[r][c] === TYPE_SAUNA && !visited[r][c]) {
-                        let group = [];
-                        let queue = [{r, c}];
-                        visited[r][c] = true;
-
-                        while (queue.length > 0) {
-                            let curr = queue.shift();
-                            group.push(curr);
-
-                            let neighbors = [
-                                {r: curr.r-1, c: curr.c}, {r: curr.r+1, c: curr.c},
-                                {r: curr.r, c: curr.c-1}, {r: curr.r, c: curr.c+1}
-                            ];
-                            for (let n of neighbors) {
-                                if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
-                                    if (board[n.r][n.c] === TYPE_SAUNA && !visited[n.r][n.c]) {
-                                        visited[n.r][n.c] = true;
-                                        queue.push(n);
-                                    }
+            for (let size = maxSize; size >= 3; size--) {
+                for (let r = 0; r <= ROWS - size; r++) {
+                    for (let c = 0; c <= COLS - size; c++) {
+                        let isFullSquare = true;
+                        for (let dr = 0; dr < size; dr++) {
+                            for (let dc = 0; dc < size; dc++) {
+                                if (board[r + dr][c + dc] !== TYPE_SAUNA) {
+                                    isFullSquare = false;
+                                    break;
                                 }
                             }
+                            if (!isFullSquare) break;
                         }
 
-                        if (group.length >= 8) {
-                            toClear.push(...group);
+                        if (isFullSquare) {
+                            for (let dr = 0; dr < size; dr++) {
+                                for (let dc = 0; dc < size; dc++) {
+                                    toClearMap[r + dr][c + dc] = true;
+                                }
+                            }
                         }
                     }
                 }
             }
-            return toClear;
+
+            let clearedCoords = [];
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (toClearMap[r][c]) {
+                        clearedCoords.push({r, c});
+                    }
+                }
+            }
+            return clearedCoords;
         }
 
+        // 水風呂フェーズ（左右最短ルートのみ消去し、枝分かれ接続ブロックの巻き込み消去を排除）
         function getColdBathClearCoords() {
-            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
-            let allConnectedGroups = [];
+            // 左端(c=0)の水風呂ブロックを起点とし、右端(c=COLS-1)への最短経路をBFS検索
+            let queue = [];
+            let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
+            let prev = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
 
             for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    if (board[r][c] === TYPE_COLD && !visited[r][c]) {
-                        let group = [];
-                        let queue = [{r, c}];
-                        visited[r][c] = true;
+                if (board[r][0] === TYPE_COLD) {
+                    queue.push({r, c: 0});
+                    dist[r][0] = 0;
+                }
+            }
 
-                        let reachesLeft = false;
-                        let reachesRight = false;
+            let reachedRightCells = [];
 
-                        while (queue.length > 0) {
-                            let curr = queue.shift();
-                            group.push(curr);
+            while (queue.length > 0) {
+                let curr = queue.shift();
 
-                            if (curr.c === 0) reachesLeft = true;
-                            if (curr.c === COLS - 1) reachesRight = true;
+                if (curr.c === COLS - 1) {
+                    reachedRightCells.push(curr);
+                }
 
-                            let neighbors = [
-                                {r: curr.r-1, c: curr.c}, {r: curr.r+1, c: curr.c},
-                                {r: curr.r, c: curr.c-1}, {r: curr.r, c: curr.c+1}
-                            ];
-                            for (let n of neighbors) {
-                                if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
-                                    if (board[n.r][n.c] === TYPE_COLD && !visited[n.r][n.c]) {
-                                        visited[n.r][n.c] = true;
-                                        queue.push(n);
-                                    }
-                                }
+                let neighbors = [
+                    {r: curr.r - 1, c: curr.c}, {r: curr.r + 1, c: curr.c},
+                    {r: curr.r, c: curr.c - 1}, {r: curr.r, c: curr.c + 1}
+                ];
+
+                for (let n of neighbors) {
+                    if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
+                        if (board[n.r][n.c] === TYPE_COLD) {
+                            if (dist[curr.r][curr.c] + 1 < dist[n.r][n.c]) {
+                                dist[n.r][n.c] = dist[curr.r][curr.c] + 1;
+                                prev[n.r][n.c] = {r: curr.r, c: curr.c};
+                                queue.push(n);
                             }
-                        }
-
-                        if (reachesLeft && reachesRight) {
-                            allConnectedGroups.push(...group);
                         }
                     }
                 }
             }
-            return allConnectedGroups;
+
+            if (reachedRightCells.length === 0) return [];
+
+            // 最短到達距離を持つ右端のセルを選択
+            reachedRightCells.sort((a, b) => dist[a.r][a.c] - dist[b.r][b.c]);
+            let target = reachedRightCells[0];
+
+            // 経路を逆たどりして消去対象セル（最短ルート上のみ）を特定
+            let pathCoords = [];
+            let curr = target;
+            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+
+            while (curr) {
+                if (!visited[curr.r][curr.c]) {
+                    visited[curr.r][curr.c] = true;
+                    pathCoords.push({r: curr.r, c: curr.c});
+                }
+                curr = prev[curr.r][curr.c];
+            }
+
+            return pathCoords;
         }
 
         function getTotonoClearCoords() {
@@ -913,12 +932,12 @@
             if (currentPhase === PHASE_SAUNA) {
                 phaseBadgeName = "サウナフェーズ";
                 phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-red-600 glossy shadow";
-                phaseSubEl.textContent = "赤8個連結で水風呂へ";
+                phaseSubEl.textContent = "3×3以上の赤正方形で水風呂へ";
                 borderColor = "border-red-500";
                 progressBarFillEl.className = "bg-red-500 h-full transition-all duration-300";
                 let redCount = 0;
                 for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(board[r][c]===TYPE_SAUNA) redCount++;
-                progressPercent = Math.min(100, (redCount / 8) * 100);
+                progressPercent = Math.min(100, (redCount / 9) * 100);
             } else if (currentPhase === PHASE_COLD) {
                 phaseBadgeName = "水風呂フェーズ";
                 phaseBadgeEl.className = "px-2 py-1 rounded-lg text-xs font-black text-white bg-blue-600 glossy shadow";
@@ -974,3 +993,4 @@
     </script>
 </body>
 </html>
+
