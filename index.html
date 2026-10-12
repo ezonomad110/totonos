@@ -92,8 +92,8 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-between p-2 sm:p-3 overflow-x-hidden">
 
-    <!-- ヘッダータイトル ＆ 上部コントロール (余分なマージンを減らしスコア枠に近づける) -->
-    <header class="w-full max-w-md flex items-center justify-between px-1 pt-1 pb-0 mb-0">
+    <!-- ヘッダータイトル ＆ 上部コントロール (上部余白を設けて下に配置) -->
+    <header class="w-full max-w-md flex items-center justify-between px-1 pt-3 pb-1 mb-1">
         <button onclick="returnToHome()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             🏠 ホーム
         </button>
@@ -147,7 +147,7 @@
             <!-- ゲームオーバー / スタート / 一時停止 オーバーレイ -->
             <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-30 m-2">
                 
-                <!-- スタート画面メインコンテンツ (バージョン表示を復活) -->
+                <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
                     <p class="text-xs font-bold text-emerald-400 mb-2">Version 2.6</p>
@@ -212,7 +212,7 @@
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン (ワンタップ誤動作防止＆長押し連射対応) -->
+    <!-- スマートフォン用タッチ操作ボタン -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-1">
         <button 
             ontouchstart="handleTouchStart(event, -1)" ontouchend="handleTouchEnd(event)" onmousedown="handleMouseDown(-1)" onmouseup="handleMouseUp()" onmouseleave="handleMouseUp()"
@@ -315,7 +315,6 @@
             } catch (e) {}
         }
 
-        // フェーズ別BGMシステム (v2.6)
         function startBGM() {
             if (bgmInterval) return;
             let step = 0;
@@ -479,7 +478,6 @@
             }
         }
 
-        // 左右ボタンのタップ精度調整＆長押し連射対応
         function handleTouchStart(e, dx) {
             e.preventDefault();
             if (touchLock || isGameOver || isPaused) return;
@@ -513,7 +511,7 @@
                         movePiece(dx, 0);
                     }
                 }, 100);
-            }, 300); // 300ms長押しされたら連射開始
+            }, 300);
         }
 
         function endHoldMove() {
@@ -1203,4 +1201,3 @@
     </script>
 </body>
 </html>
-
