@@ -84,7 +84,7 @@
             z-index: 25;
         }
 
-        /* 水風呂の最短経路トレース（雷・電気エフェクト） */
+        /* 水風呂のルート＆巻き込みトレース（雷・電気エフェクト） */
         .cold-trace {
             box-shadow: 0 0 15px 4px rgba(77, 171, 247, 1), inset 0 0 10px rgba(255, 255, 255, 1);
             filter: brightness(2.2);
@@ -181,7 +181,7 @@
                     </button>
                 </div>
 
-                <!-- ルール説明画面 -->
+                <!-- ルール説明画面 (水風呂の巻き込みルールを更新) -->
                 <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-2">
                     <h3 class="text-lg font-black text-amber-400 mb-1">遊び方ルール</h3>
                     <div class="text-[11px] text-slate-300 space-y-2.5 overflow-y-auto max-h-[230px] px-2 text-left w-full bg-slate-900/90 p-2.5 rounded-lg border border-slate-700 leading-relaxed">
@@ -200,7 +200,7 @@
                         <div>
                             <p class="font-bold text-blue-400 text-xs mb-0.5">💧 水風呂フェーズ（青）</p>
                             <p>・<strong>消し方</strong>: 青ブロックを左右の端までつなぐ経路を作ると消去され、次のととのいフェーズへ切り替わります！</p>
-                            <p class="text-slate-400 text-[10px]">※ 開通した最短ルートのみが消え、余分に枝分かれしている青ブロックは残ります。</p>
+                            <p class="text-slate-400 text-[10px]">※ 開通したルートだけでなく、<strong>隣接する青ブロックも巻き込んで一気に全消去</strong>されます！溜まった盤面をリフレッシュする大チャンス！</p>
                         </div>
 
                         <div>
@@ -769,9 +769,6 @@
                 }
 
                 if (clearedCoords.length > 0) {
-                    // ==========================================
-                    // 💡 【納得感のための可視化演出】（消去前の予兆）
-                    // ==========================================
                     for (let cell of clearedCoords) {
                         const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
                         if (cellEl) {
@@ -783,7 +780,6 @@
 
                     playClearSound();
 
-                    // 0.35秒間「どこが消えるか」をハイライトで見せたあと、消去アニメーションへ移行
                     setTimeout(() => {
                         for (let cell of clearedCoords) {
                             const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
@@ -1030,6 +1026,7 @@
             return { clearedCoords, totalScore };
         }
 
+        // 水風呂（開通最短ルート ＋ 隣接青ブロックの一括巻き込み判定）
         function getColdBathClearCoords() {
             let queue = [];
             let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
@@ -1076,17 +1073,45 @@
 
             let pathCoords = [];
             let curr = target;
-            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let visitedPath = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
 
             while (curr) {
-                if (!visited[curr.r][curr.c]) {
-                    visited[curr.r][curr.c] = true;
+                if (!visitedPath[curr.r][curr.c]) {
+                    visitedPath[curr.r][curr.c] = true;
                     pathCoords.push({r: curr.r, c: curr.c});
                 }
                 curr = prev[curr.r][curr.c];
             }
 
-            return pathCoords;
+            // 💡 【巻き込み処理】最短ルート上の各マスから隣接する全青ブロックを塗りつぶし探索(BFS)
+            let finalClearCoords = [];
+            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let floodQueue = [...pathCoords];
+
+            floodQueue.forEach(pt => {
+                visited[pt.r][pt.c] = true;
+            });
+
+            while (floodQueue.length > 0) {
+                let node = floodQueue.shift();
+                finalClearCoords.push(node);
+
+                let nbrs = [
+                    {r: node.r - 1, c: node.c}, {r: node.r + 1, c: node.c},
+                    {r: node.r, c: node.c - 1}, {r: node.r, c: node.c + 1}
+                ];
+
+                for (let n of nbrs) {
+                    if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
+                        if (board[n.r][n.c] === TYPE_COLD && !visited[n.r][n.c]) {
+                            visited[n.r][n.c] = true;
+                            floodQueue.push(n);
+                        }
+                    }
+                }
+            }
+
+            return finalClearCoords;
         }
 
         function getTotonoClearCoords() {
