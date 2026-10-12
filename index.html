@@ -166,7 +166,7 @@
             </div>
         </div>
 
-        <!-- 熱波ゲージ・発動ボタンエリア (スコア100点ごとに1pt = 10000点で100%) -->
+        <!-- 熱波ゲージ・発動ボタンエリア -->
         <div class="w-full bg-slate-800/90 px-3 py-1.5 rounded-xl border border-orange-500/60 shadow flex items-center justify-between">
             <div class="flex flex-col flex-1 mr-2">
                 <div class="flex justify-between items-center text-[9px] font-bold mb-1">
@@ -191,7 +191,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.1</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -201,105 +201,46 @@
                     </button>
                 </div>
 
-                <!-- 💡【画像・図解付きの完全版ルール画面】 -->
+                <!-- ルール画面 -->
                 <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-1">
                     <h3 class="text-sm font-black text-amber-400 mb-0.5">遊び方ルール</h3>
                     <div class="text-[10px] text-slate-300 space-y-2 overflow-y-auto max-h-[220px] px-1 text-left w-full bg-slate-900/90 p-2 rounded-lg border border-slate-700 leading-relaxed">
                         
-                        <!-- 基本構造 -->
                         <div>
                             <p class="font-bold text-amber-300 text-[11px] mb-0.5">🌀 ゲームの基本構造</p>
                             <p>・<strong>3つのフェーズ</strong>: 「サウナ ➔ 水風呂 ➔ ととのい」の順に周回・変化します。</p>
                             <p>・<strong>ターゲット制限</strong>: 現在のフェーズに対応する色のブロックしか消せません。</p>
                         </div>
 
-                        <!-- 必殺技 熱波 -->
                         <div>
                             <p class="font-bold text-orange-400 text-[11px] mb-0.5">🔥 必殺技「熱波」</p>
-                            <p>・<strong>ゲージ蓄積</strong>: 獲得したスコア<strong>100点ごとに1pt</strong>熱波ゲージが溜まります（合計10,000点で100%満タン）。</p>
+                            <p>・<strong>ゲージ蓄積</strong>: 通常パズルで獲得したスコア<strong>100点ごとに1pt</strong>熱波ゲージが溜まります（合計10,000点で100%満タン）。</p>
                             <p>・<strong>発動効果</strong>: ゲージが100%の時にボタンを押すと、下段3段にある全ブロックを一掃！ピンチを切り抜けられます！</p>
                         </div>
 
-                        <!-- サウナフェーズ -->
                         <div>
                             <p class="font-bold text-red-400 text-[11px] mb-0.5">🔥 サウナフェーズ（赤）</p>
                             <p>・<strong>消し方</strong>: 赤ブロックで内部まで完全に埋まった3×3以上の正方形を作ると消去され、次の水風呂フェーズへ切り替わります！</p>
-                            <p class="text-slate-400 text-[9px] mb-1">※ 2×2以下や、中身に隙間・別ブロックが混ざっている正方形は消えません。</p>
-                            
-                            <!-- 図解 (サウナ) -->
-                            <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded border border-red-500/40">
-                                <div class="grid grid-cols-3 gap-0.5 bg-slate-900 p-0.5 rounded border border-amber-400 shrink-0">
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-red flex items-center justify-center"><svg class="w-2 h-2 text-white"><use href="#icon-fire"/></svg></div>
-                                </div>
-                                <span class="text-[9px] text-amber-300 font-bold">3×3以上の赤正方形が作られるとゴールド枠で光って消滅！</span>
-                            </div>
                         </div>
 
-                        <!-- 水風呂フェーズ -->
                         <div>
                             <p class="font-bold text-blue-400 text-[11px] mb-0.5">💧 水風呂フェーズ（青）</p>
                             <p>・<strong>消し方</strong>: 青ブロックを左右の端までつなぐ経路を作ると消去され、次のととのいフェーズへ切り替わります！</p>
-                            <p class="text-slate-400 text-[9px] mb-1">※ 開通した最短ルートだけでなく、直接接している隣接青ブロックも巻き込んで一気に消去されます！</p>
-                            
-                            <!-- 図解 (水風呂) -->
-                            <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded border border-blue-500/40">
-                                <div class="grid grid-cols-4 gap-0.5 bg-slate-900 p-0.5 rounded border border-blue-400 shrink-0">
-                                    <div class="w-3.5 h-3.5 rounded-sm block-blue ring-1 ring-amber-300"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-blue ring-1 ring-amber-300"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-blue ring-1 ring-amber-300"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-blue ring-1 ring-amber-300"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm bg-slate-900 border border-slate-800"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-blue border border-dashed border-cyan-200"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm bg-slate-900 border border-slate-800"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm bg-slate-900 border border-slate-800"></div>
-                                </div>
-                                <span class="text-[9px] text-blue-300 font-bold">黄枠（最短ルート）＋ 点線（直接接する青）が一括消去！</span>
-                            </div>
                         </div>
 
-                        <!-- ととのいフェーズ -->
                         <div>
                             <p class="font-bold text-green-400 text-[11px] mb-0.5">🌿 ととのいフェーズ（緑）</p>
-                            <p>・<strong>消し方</strong>: 緑ブロックを上下左右に4つ以上つなぐと消去！</p>
-                            <p>・<strong>進行</strong>: 消すたびに「と...とと...ととの...ととのったー！」とステップが進みます（全4回）。</p>
-                            <p class="mb-1">・<strong>サウナへの復帰</strong>: 4回目の消去（ととのったー！）でフェーズ達成となり、盤面がリフレッシュされて最初のサウナフェーズへと戻ります！</p>
-                            
-                            <!-- 図解 (ととのい) -->
-                            <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded border border-green-500/40">
-                                <div class="grid grid-cols-3 gap-0.5 bg-slate-900 p-0.5 rounded border border-green-400 shrink-0">
-                                    <div class="w-3.5 h-3.5 rounded-sm block-green"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-green"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm bg-slate-900 border border-slate-800"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-green"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-green"></div>
-                                    <div class="w-3.5 h-3.5 rounded-sm block-gray"></div>
-                                </div>
-                                <span class="text-[9px] text-green-300 font-bold">4個以上連結で消去！4回クリアで雑念（灰）を全浄化！</span>
-                            </div>
+                            <p>・<strong>消し方</strong>: 緑ブロックを上下左右に4つ以上つなぐと消去！4回クリアで最初のサウナフェーズへ復帰します。</p>
                         </div>
 
-                        <!-- 雑念ブロック -->
                         <div>
                             <p class="font-bold text-gray-300 text-[11px] mb-0.5">💀 雑念ブロック（灰）</p>
-                            <p>・<strong>特徴</strong>: どのフェーズでも直接消すことができない邪魔なブロックです。</p>
-                            <p>・<strong>浄化</strong>: 「ととのいフェーズ」をクリア（4回消去）することで、盤面の雑念が全浄化されます！</p>
+                            <p>・<strong>特徴</strong>: どのフェーズでも直接消せない邪魔なブロックですが、「ととのいフェーズ」クリア時に全浄化されます！</p>
                         </div>
 
-                        <!-- スコア仕様 -->
                         <div>
                             <p class="font-bold text-amber-400 text-[11px] mb-0.5">🏆 スコアとボーナス仕様</p>
-                            <p>・<strong>基本点</strong>: サウナ15点/個、水風呂20点/個、ととのい50点/個、熱波直接消去10点/個</p>
-                            <p>・<strong>正方形ボーナス</strong>: 3×3(200点)、4×4(500点)、5×5(1000点)、6×6(2000点)</p>
-                            <p>・<strong>ととのったー！達成ボーナス</strong>: 1000点</p>
-                            <p>・<strong>雑念浄化ボーナス</strong>: クリア時の盤面雑念数 × 50点</p>
+                            <p>・基本点: サウナ15点/個、水風呂20点/個、ととのい50点/個、熱波直接消去10点/個</p>
                         </div>
                     </div>
                     <button onclick="hideRules()" class="mt-1 w-full max-w-[160px] py-1.5 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white shadow">
@@ -393,6 +334,29 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+        }
+
+        // 💡 ブロック着地・ロック時のサウンド（チャイム音）
+        function playLandSound() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440.00, now); // A4
+                osc.frequency.exponentialRampToValueAtTime(880.00, now + 0.12);
+
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.18);
+            } catch (e) {}
         }
 
         function playClearSound() {
@@ -747,12 +711,10 @@
             return true;
         }
 
-        // 💡 スコア加算と同時に熱波ゲージを更新するヘルパー (100点 = 1pt、10000点で100%)
+        // 💡 通常パズル時のスコア加算（熱波ゲージ蓄積対象）
         function addScore(amount) {
             score += amount;
             scoreEl.textContent = score;
-            
-            // スコア100点ごとに1pt (最大100pt)
             neppaGauge = Math.min(100, Math.floor(score / 100));
             updateNeppaUI();
         }
@@ -781,6 +743,9 @@
             if (y2 >= 0 && y2 < ROWS && x2 >= 0 && x2 < COLS && board[y2][x2] === TYPE_EMPTY) {
                 board[y2][x2] = currentPiece.type2;
             }
+
+            // 💡 ブロック着地時のチャイム音を再生
+            playLandSound();
 
             endSoftDrop();
             endHoldMove();
@@ -990,7 +955,7 @@
             stepChain();
         }
 
-        // 熱波発動処理
+        // 💡 熱波発動処理（熱波直接消去のスコアはゲージを増やさないように addScore を通さずスコアに直接加算）
         function triggerNeppa() {
             if (isGameOver || isPaused || neppaGauge < 100) return;
 
@@ -1030,8 +995,10 @@
                         board[pt.r][pt.c] = TYPE_EMPTY;
                     });
 
+                    // 熱波の直接消去ポイントはゲージを増やさないよう score に直接加算
                     let neppaScoreAdd = clearedCount * 10;
-                    addScore(neppaScoreAdd);
+                    score += neppaScoreAdd;
+                    scoreEl.textContent = score;
 
                     showFloatingMessage(`🔥 熱波発動！ 下段一掃 +${neppaScoreAdd}点`, window.innerWidth/2, 230, "text-orange-400");
                     showTotonottaBanner("🔥 熱波到来！🔥");
