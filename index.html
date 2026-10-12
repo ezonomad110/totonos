@@ -1,10 +1,11 @@
-
+承知いたしました。バージョン表記（v2.2）を復活させて、タイトルに反映したコードをご用意しました。
+以下のコードをコピーして上書きしてください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOTONOS -トトノス-</title>
+    <title>TOTONOS -トトノス- v2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
@@ -84,7 +85,7 @@
             🏠 ホーム
         </button>
         <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス-</span>
+            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v2.2</span>
         </h1>
         <button onclick="togglePause()" id="pause-btn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             ⏸ 一時停止
@@ -143,6 +144,7 @@
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
+                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 2.2</p>
                     <p id="overlay-desc" class="text-xs text-slate-300 mb-5 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
                         ゲームスタート
@@ -755,7 +757,6 @@
 
         // 水風呂フェーズ（左右最短ルートのみ消去し、枝分かれ接続ブロックの巻き込み消去を排除）
         function getColdBathClearCoords() {
-            // 左端(c=0)の水風呂ブロックを起点とし、右端(c=COLS-1)への最短経路をBFS検索
             let queue = [];
             let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
             let prev = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
@@ -796,11 +797,9 @@
 
             if (reachedRightCells.length === 0) return [];
 
-            // 最短到達距離を持つ右端のセルを選択
             reachedRightCells.sort((a, b) => dist[a.r][a.c] - dist[b.r][b.c]);
             let target = reachedRightCells[0];
 
-            // 経路を逆たどりして消去対象セル（最短ルート上のみ）を特定
             let pathCoords = [];
             let curr = target;
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
