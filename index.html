@@ -142,7 +142,7 @@
     <!-- メインコンテンツ領域 -->
     <main class="flex flex-col items-center justify-center gap-1 w-full max-w-md flex-1 my-0.5">
         
-        <!-- 上部ステータスバー (NEXT, フェーズ, スコア) -->
+        <!-- 上部ステータスバー -->
         <div id="top-status-bar" class="w-full bg-slate-800/90 px-3 py-1.5 rounded-xl border-2 border-red-500 shadow-md flex items-center justify-between transition-all duration-300">
             <div class="flex flex-col">
                 <div class="text-[8px] font-bold text-slate-400 tracking-wider">PHASE</div>
@@ -191,7 +191,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.1</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.2</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -214,33 +214,28 @@
 
                         <div>
                             <p class="font-bold text-orange-400 text-[11px] mb-0.5">🔥 必殺技「熱波」</p>
-                            <p>・<strong>ゲージ蓄積</strong>: 通常パズルで獲得したスコア<strong>100点ごとに1pt</strong>熱波ゲージが溜まります（合計10,000点で100%満タン）。</p>
-                            <p>・<strong>発動効果</strong>: ゲージが100%の時にボタンを押すと、下段3段にある全ブロックを一掃！ピンチを切り抜けられます！</p>
+                            <p>・<strong>ゲージ蓄積</strong>: 通常パズルスコア<strong>100点ごとに1pt</strong>溜まります（10,000点で100%）。熱波発動時の直接消去スコアはゲージを増やしません。</p>
+                            <p>・<strong>発動効果</strong>: 下段3段にある全ブロックを一掃！</p>
                         </div>
 
                         <div>
                             <p class="font-bold text-red-400 text-[11px] mb-0.5">🔥 サウナフェーズ（赤）</p>
-                            <p>・<strong>消し方</strong>: 赤ブロックで内部まで完全に埋まった3×3以上の正方形を作ると消去され、次の水風呂フェーズへ切り替わります！</p>
+                            <p>・3×3以上の赤正方形で消去（基本15点/個 ＋ 正方形ボーナス）。</p>
                         </div>
 
                         <div>
                             <p class="font-bold text-blue-400 text-[11px] mb-0.5">💧 水風呂フェーズ（青）</p>
-                            <p>・<strong>消し方</strong>: 青ブロックを左右の端までつなぐ経路を作ると消去され、次のととのいフェーズへ切り替わります！</p>
+                            <p>・左右を繋げて消去（基本35点/個 ＋ ルート開通ボーナス＋300点）。</p>
                         </div>
 
                         <div>
                             <p class="font-bold text-green-400 text-[11px] mb-0.5">🌿 ととのいフェーズ（緑）</p>
-                            <p>・<strong>消し方</strong>: 緑ブロックを上下左右に4つ以上つなぐと消去！4回クリアで最初のサウナフェーズへ復帰します。</p>
+                            <p>・4個以上連結で消去（基本50点/個）。4回クリアで「ととのったー！」（＋1000点）＆雑念浄化！</p>
                         </div>
 
                         <div>
-                            <p class="font-bold text-gray-300 text-[11px] mb-0.5">💀 雑念ブロック（灰）</p>
-                            <p>・<strong>特徴</strong>: どのフェーズでも直接消せない邪魔なブロックですが、「ととのいフェーズ」クリア時に全浄化されます！</p>
-                        </div>
-
-                        <div>
-                            <p class="font-bold text-amber-400 text-[11px] mb-0.5">🏆 スコアとボーナス仕様</p>
-                            <p>・基本点: サウナ15点/個、水風呂20点/個、ととのい50点/個、熱波直接消去10点/個</p>
+                            <p class="font-bold text-amber-400 text-[11px] mb-0.5">🏆 コンボボーナス</p>
+                            <p>・フェーズ跨ぎなどの連続消去で倍率アップ（2コンボ目以降 $2^{\text{コンボ}-1} \times 1.5$ 倍）。</p>
                         </div>
                     </div>
                     <button onclick="hideRules()" class="mt-1 w-full max-w-[160px] py-1.5 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white shadow">
@@ -336,7 +331,6 @@
             }
         }
 
-        // 💡 ブロック着地・ロック時のサウンド（チャイム音）
         function playLandSound() {
             try {
                 initAudio();
@@ -345,7 +339,7 @@
                 const gain = audioCtx.createGain();
 
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(440.00, now); // A4
+                osc.frequency.setValueAtTime(440.00, now);
                 osc.frequency.exponentialRampToValueAtTime(880.00, now + 0.12);
 
                 gain.gain.setValueAtTime(0.15, now);
@@ -711,7 +705,7 @@
             return true;
         }
 
-        // 💡 通常パズル時のスコア加算（熱波ゲージ蓄積対象）
+        // 通常パズル時のスコア加算（熱波ゲージ蓄積対象）
         function addScore(amount) {
             score += amount;
             scoreEl.textContent = score;
@@ -744,7 +738,6 @@
                 board[y2][x2] = currentPiece.type2;
             }
 
-            // 💡 ブロック着地時のチャイム音を再生
             playLandSound();
 
             endSoftDrop();
@@ -818,7 +811,8 @@
                     saunaScoreAdd = saunaData.totalScore;
                     actionType = 'SAUNA';
                 } else if (currentPhase === PHASE_COLD) {
-                    clearedCoords = getColdBathClearCoords();
+                    let coldData = getColdBathClearData();
+                    clearedCoords = coldData.clearedCoords;
                     actionType = 'COLD';
                 } else if (currentPhase === PHASE_TOTONO) {
                     clearedCoords = getTotonoClearCoords();
@@ -874,8 +868,8 @@
                             } else if (actionType === 'COLD') {
                                 let currentCombo = evaluateCombo(PHASE_COLD);
                                 let multiplier = currentCombo > 1 ? Math.pow(2, currentCombo - 1) * 1.5 : 1;
-                                let baseColdScore = clearedCoords.length * 20;
-                                let finalColdScore = Math.floor(baseColdScore * multiplier);
+                                let coldData = getColdBathClearData();
+                                let finalColdScore = Math.floor(coldData.totalScore * multiplier);
 
                                 addScore(finalColdScore);
 
@@ -955,7 +949,7 @@
             stepChain();
         }
 
-        // 💡 熱波発動処理（熱波直接消去のスコアはゲージを増やさないように addScore を通さずスコアに直接加算）
+        // 熱波発動処理（熱波直接消去のスコアはゲージを増やさない）
         function triggerNeppa() {
             if (isGameOver || isPaused || neppaGauge < 100) return;
 
@@ -995,7 +989,6 @@
                         board[pt.r][pt.c] = TYPE_EMPTY;
                     });
 
-                    // 熱波の直接消去ポイントはゲージを増やさないよう score に直接加算
                     let neppaScoreAdd = clearedCount * 10;
                     score += neppaScoreAdd;
                     scoreEl.textContent = score;
@@ -1158,7 +1151,8 @@
             return { clearedCoords, totalScore };
         }
 
-        function getColdBathClearCoords() {
+        // 水風呂スコア強化（基本35点/個 ＋ ルート開通ボーナス＋300点）
+        function getColdBathClearData() {
             let queue = [];
             let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
             let prev = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
@@ -1197,7 +1191,7 @@
                 }
             }
 
-            if (reachedRightCells.length === 0) return [];
+            if (reachedRightCells.length === 0) return { clearedCoords: [], totalScore: 0 };
 
             reachedRightCells.sort((a, b) => dist[a.r][a.c] - dist[b.r][b.c]);
             let target = reachedRightCells[0];
@@ -1231,16 +1225,20 @@
                 });
             });
 
-            let finalClearCoords = [];
+            let clearedCoords = [];
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     if (finalClearMap[r][c]) {
-                        finalClearCoords.push({r, c});
+                        clearedCoords.push({r, c});
                     }
                 }
             }
 
-            return finalClearCoords;
+            let baseScore = clearedCoords.length * 35;
+            let routeBonus = 300;
+            let totalScore = baseScore + routeBonus;
+
+            return { clearedCoords, totalScore };
         }
 
         function getTotonoClearCoords() {
