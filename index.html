@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOTONOS -トトノス- v2.3</title>
+    <title>TOTONOS -トトノス- v2.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
@@ -83,7 +83,7 @@
             🏠 ホーム
         </button>
         <h1 class="text-lg sm:text-xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v2.3</span>
+            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v2.4</span>
         </h1>
         <button onclick="togglePause()" id="pause-btn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             ⏸ 一時停止
@@ -135,7 +135,7 @@
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 2.3</p>
+                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 2.4</p>
                     <p id="overlay-desc" class="text-xs text-slate-300 mb-5 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
                         ゲームスタート
@@ -585,9 +585,12 @@
                 if (isPaused || isGameOver) return;
                 let clearedCoords = [];
                 let actionType = null;
+                let saunaScoreAdd = 0;
 
                 if (currentPhase === PHASE_SAUNA) {
-                    clearedCoords = getSaunaClearCoords();
+                    let saunaData = getSaunaClearData();
+                    clearedCoords = saunaData.clearedCoords;
+                    saunaScoreAdd = saunaData.totalScore;
                     actionType = 'SAUNA';
                 } else if (currentPhase === PHASE_COLD) {
                     clearedCoords = getColdBathClearCoords();
@@ -610,9 +613,9 @@
                         }
 
                         if (actionType === 'SAUNA') {
-                            score += clearedCoords.length * 10;
+                            score += saunaScoreAdd;
                             scoreEl.textContent = score;
-                            showFloatingMessage(`🔥 SAUNA CLEAR! 💧水風呂へ突入！`, window.innerWidth/2, 250, "text-blue-400");
+                            showFloatingMessage(`🔥 SAUNA CLEAR! (+${saunaScoreAdd})`, window.innerWidth/2, 250, "text-blue-400");
                             saunaClearCount++;
                             currentPhase = PHASE_COLD;
                             updateUI();
@@ -621,9 +624,10 @@
                             });
                             return;
                         } else if (actionType === 'COLD') {
-                            score += clearedCoords.length * 20;
+                            let coldScoreAdd = clearedCoords.length * 20;
+                            score += coldScoreAdd;
                             scoreEl.textContent = score;
-                            showFloatingMessage(`💧 COLD BATH CLEAR! 🌿ととのいへ！`, window.innerWidth/2, 250, "text-green-400");
+                            showFloatingMessage(`💧 COLD BATH CLEAR! (+${coldScoreAdd})`, window.innerWidth/2, 250, "text-green-400");
                             currentPhase = PHASE_TOTONO;
                             totonoClearStep = 0;
                             nextPiece = generateRandomPiece();
@@ -633,9 +637,11 @@
                             });
                             return;
                         } else if (actionType === 'TOTONO') {
-                            totonoClearStep++;
-                            score += 200;
+                            let totonoScoreAdd = clearedCoords.length * 50;
+                            score += totonoScoreAdd;
                             scoreEl.textContent = score;
+
+                            totonoClearStep++;
 
                             let bannerText = "";
                             if (totonoClearStep === 1) bannerText = "と";
@@ -646,6 +652,27 @@
                             showTotonottaBanner(bannerText);
 
                             if (totonoClearStep >= 4) {
+                                // 雑念ブロック数をカウントして浄化ボーナスと達成ボーナスを加算
+                                let jammerCount = 0;
+                                for (let r = 0; r < ROWS; r++) {
+                                    for (let c = 0; c < COLS; c++) {
+                                        if (board[r][c] === TYPE_JAMMER) {
+                                            jammerCount++;
+                                        }
+                                    }
+                                }
+                                let achievementBonus = 500;
+                                let purificationBonus = jammerCount * 30;
+                                score += achievementBonus + purificationBonus;
+                                scoreEl.textContent = score;
+
+                                showFloatingMessage(`🌿 ととのったー！ +${achievementBonus}点`, window.innerWidth/2, 230, "text-green-300");
+                                if (jammerCount > 0) {
+                                    setTimeout(() => {
+                                        showFloatingMessage(`✨ 雑念浄化 ${jammerCount}個 +${purificationBonus}点`, window.innerWidth/2, 270, "text-amber-300");
+                                    }, 400);
+                                }
+
                                 removeAllJammers();
                                 saunaClearCount = 0;
                                 currentPhase = PHASE_SAUNA;
@@ -735,29 +762,37 @@
             setTimeout(() => banner.remove(), 1400);
         }
 
-        function getSaunaClearCoords() {
+        // サウナフェーズ：正方形ボーナスを考慮したクリア情報取得
+        function getSaunaClearData() {
             let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            let squareBonus = 0;
             let maxSize = Math.min(ROWS, COLS);
+            const bonuses = { 3: 150, 4: 400, 5: 750, 6: 1200 };
 
             for (let size = maxSize; size >= 3; size--) {
                 for (let r = 0; r <= ROWS - size; r++) {
                     for (let c = 0; c <= COLS - size; c++) {
                         let isFullSquare = true;
+                        let alreadyCleared = false;
                         for (let dr = 0; dr < size; dr++) {
                             for (let dc = 0; dc < size; dc++) {
                                 if (board[r + dr][c + dc] !== TYPE_SAUNA) {
                                     isFullSquare = false;
-                                    break;
+                                }
+                                if (toClearMap[r + dr][c + dc]) {
+                                    alreadyCleared = true;
                                 }
                             }
-                            if (!isFullSquare) break;
                         }
 
-                        if (isFullSquare) {
+                        if (isFullSquare && !alreadyCleared) {
                             for (let dr = 0; dr < size; dr++) {
                                 for (let dc = 0; dc < size; dc++) {
                                     toClearMap[r + dr][c + dc] = true;
                                 }
+                            }
+                            if (bonuses[size]) {
+                                squareBonus += bonuses[size];
                             }
                         }
                     }
@@ -772,7 +807,10 @@
                     }
                 }
             }
-            return clearedCoords;
+
+            let baseScore = clearedCoords.length * 10;
+            let totalScore = baseScore + squareBonus;
+            return { clearedCoords, totalScore };
         }
 
         function getColdBathClearCoords() {
@@ -880,9 +918,6 @@
                         removed++;
                     }
                 }
-            }
-            if (removed > 0) {
-                showFloatingMessage(`✨ 雑念ブロック全 ${removed}個浄化！`, window.innerWidth/2, 290, "text-amber-300");
             }
         }
 
@@ -999,4 +1034,3 @@
     </script>
 </body>
 </html>
-
