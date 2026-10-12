@@ -1,3 +1,6 @@
+「画面最上部（1行目）にブロックが設置されてもすぐにはゲームオーバーにならず、一番上の行が完全に埋まって（または溢れて）新しいピースが出現できなくなった時だけゲームオーバーになる」仕様に変更しました！
+これで、一番上まで積み上がった緊迫した状態からでも、直前の消し方で一気に下へ落としてリカバリーする熱いプレイが可能になります。
+以下の完全版のコードをコピーして、ファイルを上書き保存してください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -12,7 +15,6 @@
             touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
-            /* スマホの上下セーフエリア対応とスクロール防止 */
             padding-top: env(safe-area-inset-top, 0px);
             padding-bottom: env(safe-area-inset-bottom, 8px);
             min-height: 100vh;
@@ -166,7 +168,7 @@
         <div id="board-container" class="relative bg-slate-950 p-1.5 rounded-2xl shadow-2xl border-4 border-red-500 transition-all duration-300" style="width: calc(min(78vw, 260px) + 12px); height: calc(min(117vw, 390px) + 12px);">
             <!-- グリッドボード (8列 × 12行) -->
             <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg w-full h-full relative">
-                <!-- JSで動적生成 -->
+                <!-- JSで動的生成 -->
             </div>
 
             <!-- ゲームオーバー / スタート / 一時停止 オーバーレイ -->
@@ -288,7 +290,7 @@
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン (スマホ下部バーに隠れないよう上に配置) -->
+    <!-- スマートフォン用タッチ操作ボタン -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-1.5 pb-1">
         <button 
             ontouchstart="handleTouchStart(event, -1)" ontouchend="handleTouchEnd(event)" onmousedown="handleMouseDown(-1)" onmouseup="handleMouseUp()" onmouseleave="handleMouseUp()"
@@ -656,13 +658,11 @@
             currentPiece.y = 0;
             currentPiece.rot = 2;
 
+            // 💡 修正：生成位置（y=0）にブロックがあって置けない場合のみゲームオーバー
             if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot)) {
-                currentPiece.y = 1;
-                if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot)) {
-                    render();
-                    gameOver();
-                    return;
-                }
+                render();
+                gameOver();
+                return;
             }
             updateUI();
         }
@@ -1326,3 +1326,4 @@
     </script>
 </body>
 </html>
+
