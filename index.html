@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOTONOS -トトノス- v2.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TOTONOS -トトノス-</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
@@ -12,6 +12,8 @@
             touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
         }
         .glossy {
             background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.3) 100%);
@@ -90,13 +92,13 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-between p-2 sm:p-3 overflow-x-hidden">
 
-    <!-- ヘッダータイトル ＆ 上部コントロール -->
-    <header class="w-full max-w-md flex items-center justify-between px-1 mb-1">
+    <!-- ヘッダータイトル ＆ 上部コントロール (Safari位置微調整・バージョン非表示・タイトル拡大) -->
+    <header class="w-full max-w-md flex items-center justify-between px-1 pt-2 pb-1 mb-1">
         <button onclick="returnToHome()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             🏠 ホーム
         </button>
-        <h1 class="text-lg sm:text-xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            TOTONOS <span class="text-[10px] font-bold text-slate-300">-トトノス- v2.5</span>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
+            TOTONOS
         </h1>
         <button onclick="togglePause()" id="pause-btn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             ⏸ 一時停止
@@ -148,7 +150,6 @@
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-xs font-bold text-emerald-400 mb-1">Version 2.5</p>
                     <p id="overlay-desc" class="text-xs text-slate-300 mb-5 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
                         ゲームスタート
@@ -158,7 +159,7 @@
                     </button>
                 </div>
 
-                <!-- ルール説明画面 -->
+                <!-- ルール説明画面 (スコア仕様の説明を追加) -->
                 <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-2">
                     <h3 class="text-lg font-black text-amber-400 mb-1">遊び方ルール</h3>
                     <div class="text-[11px] text-slate-300 space-y-2.5 overflow-y-auto max-h-[230px] px-2 text-left w-full bg-slate-900/90 p-2.5 rounded-lg border border-slate-700 leading-relaxed">
@@ -192,6 +193,14 @@
                             <p>・<strong>特徴</strong>: どのフェーズでも消すことができない邪魔なブロックです。</p>
                             <p>・<strong>浄化</strong>: 「ととのいフェーズ」をクリア（4回消去）することで、盤面の雑念が全浄化され、すっきりした状態でサウナフェーズを再開できます！</p>
                         </div>
+
+                        <div>
+                            <p class="font-bold text-amber-400 text-xs mb-0.5">🏆 スコアとボーナス仕様</p>
+                            <p>・<strong>基本点</strong>: サウナ10点/個、水風呂20点/個、ととのい50点/個</p>
+                            <p>・<strong>正方形ボーナス</strong>: 3×3(150点)、4×4(400点)、5×5(750点)、6×6(1200点)</p>
+                            <p>・<strong>ととのったー！達成ボーナス</strong>: 500点</p>
+                            <p>・<strong>雑念浄化ボーナス</strong>: クリア時の盤面雑念数 × 30点</p>
+                        </div>
                     </div>
                     <button onclick="hideRules()" class="mt-1 w-full max-w-[180px] py-1.5 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white">
                         戻る
@@ -202,14 +211,18 @@
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン -->
+    <!-- スマートフォン用タッチ操作ボタン (左右も長押し連続移動に対応) -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-1">
-        <button onclick="movePiece(-1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">◀</button>
-        <button onclick="movePiece(1, 0)" class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">▶</button>
+        <button 
+            ontouchstart="startHoldMove(-1)" ontouchend="endHoldMove()" onmousedown="startHoldMove(-1)" onmouseup="endHoldMove()" onmouseleave="endHoldMove()"
+            class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white select-none">◀</button>
+        <button 
+            ontouchstart="startHoldMove(1)" ontouchend="endHoldMove()" onmousedown="startHoldMove(1)" onmouseup="endHoldMove()" onmouseleave="endHoldMove()"
+            class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white select-none">▶</button>
         <button 
             ontouchstart="startSoftDrop()" ontouchend="endSoftDrop()" onmousedown="startSoftDrop()" onmouseup="endSoftDrop()" onmouseleave="endSoftDrop()"
             class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white select-none">▼</button>
-        <button onclick="rotatePieceClockwise()" class="bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white">↻ 90°</button>
+        <button onclick="rotatePieceClockwise()" class="bg-indigo-600 active:bg-indigo-500 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white select-none">↻ 90°</button>
     </footer>
 
     <!-- アイコン用SVG定義 -->
@@ -250,9 +263,8 @@
         let saunaClearCount = 0;
         let totonoClearStep = 0;
         
-        // フェーズコンボ管理用変数
         let phaseComboCount = 0;
-        let lastClearPhase = null; // 直前に消去が成功したフェーズ
+        let lastClearPhase = null;
 
         let isGameOver = true;
         let isPaused = false;
@@ -260,6 +272,8 @@
         let normalDropSpeed = 800;
         let softDropSpeed = 80;
         let isSoftDropping = false;
+
+        let holdMoveInterval = null;
 
         let currentPiece = null;
         let nextPiece = null;
@@ -447,6 +461,25 @@
             }
         }
 
+        // 左右ボタンの長押し（連射）対応処理
+        function startHoldMove(dx) {
+            if (isGameOver || isPaused) return;
+            movePiece(dx, 0);
+            if (holdMoveInterval) clearInterval(holdMoveInterval);
+            holdMoveInterval = setInterval(() => {
+                if (!isGameOver && !isPaused) {
+                    movePiece(dx, 0);
+                }
+            }, 110);
+        }
+
+        function endHoldMove() {
+            if (holdMoveInterval) {
+                clearInterval(holdMoveInterval);
+                holdMoveInterval = null;
+            }
+        }
+
         function startSoftDrop() {
             if (isGameOver || isPaused || isSoftDropping) return;
             isSoftDropping = true;
@@ -590,6 +623,7 @@
             }
 
             endSoftDrop();
+            endHoldMove();
             currentPiece = null;
 
             applyGravityWithAnimation(() => {
@@ -600,12 +634,10 @@
             });
         }
 
-        // フェーズコンボ判定処理
         function checkAndApplyPhaseCombo(clearedPhase) {
             let comboMultiplied = false;
             
             if (clearedPhase === PHASE_SAUNA) {
-                // サウナ消去成功：直前が「サウナ」または「ととのい」であればコンボ継続・成立
                 if (lastClearPhase === PHASE_SAUNA || lastClearPhase === PHASE_TOTONO) {
                     phaseComboCount++;
                     comboMultiplied = true;
@@ -614,7 +646,6 @@
                 }
                 lastClearPhase = PHASE_SAUNA;
             } else if (clearedPhase === PHASE_COLD) {
-                // 水風呂消去成功：直前が「サウナ」であればコンボ成立対象
                 if (lastClearPhase === PHASE_SAUNA) {
                     phaseComboCount++;
                     comboMultiplied = true;
@@ -623,8 +654,6 @@
                 }
                 lastClearPhase = PHASE_COLD;
             } else if (clearedPhase === PHASE_TOTONO) {
-                // ととのい消去成功：水風呂からの移行はコンボ対象外（リセットまたは維持の仕様に合わせて制御）
-                // 仕様2: 水風呂からととのいへの移行はコンボ対象外。不当に増やさない。
                 if (lastClearPhase === PHASE_COLD) {
                     phaseComboCount = 1;
                 } else if (lastClearPhase === PHASE_TOTONO) {
@@ -715,7 +744,6 @@
                             });
                             return;
                         } else if (actionType === 'TOTONO') {
-                            // 水風呂からの移行時はコンボ数を増やさない/リセット
                             if (lastClearPhase === PHASE_COLD) {
                                 phaseComboCount = 1;
                             }
@@ -845,7 +873,6 @@
             setTimeout(() => banner.remove(), 1400);
         }
 
-        // コンボ発生時のわかりやすい派手な演出用バナー
         function showComboBanner(text) {
             const banner = document.createElement('div');
             banner.className = 'absolute inset-0 flex items-center justify-center z-50 pointer-events-none';
