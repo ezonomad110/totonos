@@ -1,3 +1,11 @@
+ご要望の以下の3点をすべて反映いたしました！
+ * 左右移動のタップ精度調整（ワンタップで2マス進む問題の解消）:
+   * 初回タップ時は単発で1マスだけ確実に動き、そのまま押し続けた場合のみ少しディレイ（タメ）を挟んでから滑らかな連続移動（長押し連射）に入るようロジックを調整しました。また、タッチ・マウスイベントの重複発火を防ぐ処理を追加しています。
+ * スタート画面へのバージョン表示の復元:
+   * スタート画面の中央（タイトル下）に「Version 2.6」の表記を再び追加しました。
+ * ゲーム画面のタイトルとスコア枠（上部ステータスバー）の距離を近づける:
+   * ヘッダーとメインのステータスバーの間の余分なマージン（余白）を削減し、全体的にぎゅっと上に引き締めてスコア枠に近づけました。
+バージョン v2.6 の完全版コードです。こちらのコードをコピーして上書きしてください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -92,8 +100,8 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-between p-2 sm:p-3 overflow-x-hidden">
 
-    <!-- ヘッダータイトル ＆ 上部コントロール (Safari位置微調整・バージョン非表示・タイトル拡大) -->
-    <header class="w-full max-w-md flex items-center justify-between px-1 pt-2 pb-1 mb-1">
+    <!-- ヘッダータイトル ＆ 上部コントロール (余分なマージンを減らしスコア枠に近づける) -->
+    <header class="w-full max-w-md flex items-center justify-between px-1 pt-1 pb-0 mb-0">
         <button onclick="returnToHome()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 glossy transition shadow">
             🏠 ホーム
         </button>
@@ -106,7 +114,7 @@
     </header>
 
     <!-- メインコンテンツ領域 -->
-    <main class="flex flex-col items-center justify-center gap-2 w-full max-w-md flex-1">
+    <main class="flex flex-col items-center justify-center gap-1.5 w-full max-w-md flex-1">
         
         <!-- 上部ステータスバー (NEXT, フェーズ, スコア) -->
         <div id="top-status-bar" class="w-full bg-slate-800/90 px-3 py-2 rounded-xl border-2 border-red-500 shadow-md flex items-center justify-between transition-all duration-300">
@@ -147,9 +155,10 @@
             <!-- ゲームオーバー / スタート / 一時停止 オーバーレイ -->
             <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-30 m-2">
                 
-                <!-- スタート画面メインコンテンツ -->
+                <!-- スタート画面メインコンテンツ (バージョン表示を復活) -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
-                    <h2 id="overlay-title" class="text-3xl font-black mb-2 text-amber-400 drop-shadow-md">TOTONOS</h2>
+                    <h2 id="overlay-title" class="text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
+                    <p class="text-xs font-bold text-emerald-400 mb-2">Version 2.6</p>
                     <p id="overlay-desc" class="text-xs text-slate-300 mb-5 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-lg glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-3">
                         ゲームスタート
@@ -159,7 +168,7 @@
                     </button>
                 </div>
 
-                <!-- ルール説明画面 (スコア仕様の説明を追加) -->
+                <!-- ルール説明画面 -->
                 <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-2">
                     <h3 class="text-lg font-black text-amber-400 mb-1">遊び方ルール</h3>
                     <div class="text-[11px] text-slate-300 space-y-2.5 overflow-y-auto max-h-[230px] px-2 text-left w-full bg-slate-900/90 p-2.5 rounded-lg border border-slate-700 leading-relaxed">
@@ -211,13 +220,13 @@
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン (左右も長押し連続移動に対応) -->
+    <!-- スマートフォン用タッチ操作ボタン (ワンタップ誤動作防止＆長押し連射対応) -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-2 my-1">
         <button 
-            ontouchstart="startHoldMove(-1)" ontouchend="endHoldMove()" onmousedown="startHoldMove(-1)" onmouseup="endHoldMove()" onmouseleave="endHoldMove()"
+            ontouchstart="handleTouchStart(event, -1)" ontouchend="handleTouchEnd(event)" onmousedown="handleMouseDown(-1)" onmouseup="handleMouseUp()" onmouseleave="handleMouseUp()"
             class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white select-none">◀</button>
         <button 
-            ontouchstart="startHoldMove(1)" ontouchend="endHoldMove()" onmousedown="startHoldMove(1)" onmouseup="endHoldMove()" onmouseleave="endHoldMove()"
+            ontouchstart="handleTouchStart(event, 1)" ontouchend="handleTouchEnd(event)" onmousedown="handleMouseDown(1)" onmouseup="handleMouseUp()" onmouseleave="handleMouseUp()"
             class="bg-slate-700 active:bg-slate-600 py-3 rounded-xl glossy flex items-center justify-center text-xl font-black shadow text-white select-none">▶</button>
         <button 
             ontouchstart="startSoftDrop()" ontouchend="endSoftDrop()" onmousedown="startSoftDrop()" onmouseup="endSoftDrop()" onmouseleave="endSoftDrop()"
@@ -273,7 +282,9 @@
         let softDropSpeed = 80;
         let isSoftDropping = false;
 
+        let holdMoveTimer = null;
         let holdMoveInterval = null;
+        let touchLock = false;
 
         let currentPiece = null;
         let nextPiece = null;
@@ -312,9 +323,9 @@
             } catch (e) {}
         }
 
+        // フェーズ別BGMシステム (v2.6)
         function startBGM() {
             if (bgmInterval) return;
-            const notes = [261.63, 329.63, 392.00, 523.25];
             let step = 0;
 
             bgmInterval = setInterval(() => {
@@ -325,20 +336,34 @@
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
 
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(notes[step % notes.length], now);
-
-                    gain.gain.setValueAtTime(0.05, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+                    if (currentPhase === PHASE_SAUNA) {
+                        const notes = [261.63, 329.63, 392.00, 523.25, 493.88, 392.00];
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(notes[step % notes.length], now);
+                        gain.gain.setValueAtTime(0.03, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    } else if (currentPhase === PHASE_COLD) {
+                        const notes = [329.63, 392.00, 659.25, 523.25, 587.33, 659.25];
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(notes[step % notes.length], now);
+                        gain.gain.setValueAtTime(0.04, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    } else if (currentPhase === PHASE_TOTONO) {
+                        const notes = [220.00, 277.18, 329.63, 440.00];
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(notes[step % notes.length], now);
+                        gain.gain.setValueAtTime(0.05, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+                    }
 
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
 
                     osc.start(now);
-                    osc.stop(now + 1.2);
+                    osc.stop(now + (currentPhase === PHASE_SAUNA ? 0.4 : 0.9));
                     step++;
                 } catch(e) {}
-            }, 1800);
+            }, currentPhase === PHASE_SAUNA ? 400 : 700);
         }
 
         function stopBGM() {
@@ -413,6 +438,7 @@
             spawnNewPiece();
             
             setDropInterval(normalDropSpeed);
+            stopBGM();
             startBGM();
             updateUI();
         }
@@ -461,19 +487,48 @@
             }
         }
 
-        // 左右ボタンの長押し（連射）対応処理
-        function startHoldMove(dx) {
-            if (isGameOver || isPaused) return;
+        // 左右ボタンのタップ精度調整＆長押し連射対応
+        function handleTouchStart(e, dx) {
+            e.preventDefault();
+            if (touchLock || isGameOver || isPaused) return;
+            touchLock = true;
+            setTimeout(() => { touchLock = false; }, 150);
+
             movePiece(dx, 0);
-            if (holdMoveInterval) clearInterval(holdMoveInterval);
-            holdMoveInterval = setInterval(() => {
-                if (!isGameOver && !isPaused) {
-                    movePiece(dx, 0);
-                }
-            }, 110);
+            startHoldMoveSequence(dx);
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            endHoldMove();
+        }
+
+        function handleMouseDown(dx) {
+            if (touchLock || isGameOver || isPaused) return;
+            movePiece(dx, 0);
+            startHoldMoveSequence(dx);
+        }
+
+        function handleMouseUp() {
+            endHoldMove();
+        }
+
+        function startHoldMoveSequence(dx) {
+            endHoldMove();
+            holdMoveTimer = setTimeout(() => {
+                holdMoveInterval = setInterval(() => {
+                    if (!isGameOver && !isPaused) {
+                        movePiece(dx, 0);
+                    }
+                }, 100);
+            }, 300); // 300ms長押しされたら連射開始
         }
 
         function endHoldMove() {
+            if (holdMoveTimer) {
+                clearTimeout(holdMoveTimer);
+                holdMoveTimer = null;
+            }
             if (holdMoveInterval) {
                 clearInterval(holdMoveInterval);
                 holdMoveInterval = null;
@@ -717,6 +772,8 @@
 
                             saunaClearCount++;
                             currentPhase = PHASE_COLD;
+                            stopBGM();
+                            startBGM();
                             updateUI();
                             applyGravityWithAnimation(() => {
                                 setTimeout(stepChain, 400);
@@ -738,6 +795,8 @@
                             currentPhase = PHASE_TOTONO;
                             totonoClearStep = 0;
                             nextPiece = generateRandomPiece();
+                            stopBGM();
+                            startBGM();
                             updateUI();
                             applyGravityWithAnimation(() => {
                                 setTimeout(stepChain, 400);
@@ -789,6 +848,8 @@
                                 currentPhase = PHASE_SAUNA;
                                 totonoClearStep = 0;
                                 nextPiece = generateRandomPiece();
+                                stopBGM();
+                                startBGM();
                                 updateUI();
                             }
 
@@ -1150,3 +1211,4 @@
     </script>
 </body>
 </html>
+
