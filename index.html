@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -81,21 +82,18 @@
             z-index: 20;
         }
 
-        /* サウナ正方形の認識ハイライト枠 */
         .sauna-highlight {
             box-shadow: 0 0 15px 3px rgba(255, 215, 0, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.9);
             border: 3px solid #ffdf00 !important;
             z-index: 25;
         }
 
-        /* 水風呂のルート＆巻き込みトレース */
         .cold-trace {
             box-shadow: 0 0 15px 4px rgba(77, 171, 247, 1), inset 0 0 10px rgba(255, 255, 255, 1);
             filter: brightness(2.2);
             z-index: 25;
         }
 
-        /* ととのい連結グループのパルスエフェクト */
         .totono-pulse {
             box-shadow: 0 0 15px 4px rgba(105, 219, 124, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.9);
             transform: scale(1.08);
@@ -115,7 +113,6 @@
             white-space: nowrap;
         }
 
-        /* 熱波発動時の超ド派手な演出エフェクト */
         @keyframes neppa-flash {
             0% { filter: brightness(1); }
             30% { filter: brightness(3.5) sepia(1) hue-rotate(-30deg) saturate(5); }
@@ -147,7 +144,6 @@
         
         <!-- 上部ステータスバー (NEXT, フェーズ, スコア) -->
         <div id="top-status-bar" class="w-full bg-slate-800/90 px-3 py-1.5 rounded-xl border-2 border-red-500 shadow-md flex items-center justify-between transition-all duration-300">
-            <!-- 現在のフェーズ -->
             <div class="flex flex-col">
                 <div class="text-[8px] font-bold text-slate-400 tracking-wider">PHASE</div>
                 <div id="phase-badge" class="px-2 py-0.5 rounded-lg text-[11px] font-black text-white bg-red-600 glossy shadow">
@@ -156,7 +152,6 @@
                 <div id="phase-sub" class="text-[8px] text-slate-300 mt-0.5">3×3以上の赤正方形で水風呂へ</div>
             </div>
 
-            <!-- スコア -->
             <div class="text-center flex flex-col">
                 <div class="text-[8px] font-bold text-slate-400 tracking-wider">SCORE / HIGH</div>
                 <div class="flex items-baseline gap-1">
@@ -165,20 +160,17 @@
                 </div>
             </div>
 
-            <!-- NEXTプレビュー -->
             <div class="flex flex-col items-center">
                 <span class="text-[8px] font-bold text-slate-400 tracking-wider mb-0.5">NEXT</span>
-                <div id="next-preview" class="flex gap-1 bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-700 items-center justify-center">
-                    <!-- プレビューブロック横並び -->
-                </div>
+                <div id="next-preview" class="flex gap-1 bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-700 items-center justify-center"></div>
             </div>
         </div>
 
-        <!-- 💡 熱波ゲージ・発動ボタンエリア -->
+        <!-- 熱波ゲージ・発動ボタンエリア -->
         <div class="w-full bg-slate-800/90 px-3 py-1.5 rounded-xl border border-orange-500/60 shadow flex items-center justify-between">
             <div class="flex flex-col flex-1 mr-2">
                 <div class="flex justify-between items-center text-[9px] font-bold mb-1">
-                    <span class="text-orange-400 tracking-wider">🔥 熱波ゲージ (NEPPA)</span>
+                    <span class="text-orange-400 tracking-wider">🔥 熱波ゲージ</span>
                     <span id="neppa-gauge-text" class="text-amber-300">0%</span>
                 </div>
                 <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700">
@@ -190,20 +182,16 @@
             </button>
         </div>
 
-        <!-- 盤面コンテナ (サイズ自動調整・縦長対応) -->
+        <!-- 盤面コンテナ -->
         <div id="board-container" class="relative bg-slate-950 p-1.5 rounded-2xl shadow-2xl border-4 border-red-500 transition-all duration-300" style="width: calc(min(78vw, 260px) + 12px); height: calc(min(117vw, 390px) + 12px);">
-            <!-- グリッドボード (8列 × 12行) -->
-            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg w-full h-full relative">
-                <!-- JSで動的生成 -->
-            </div>
+            <div id="board" class="grid grid-cols-8 gap-1 bg-slate-900 p-1 rounded-lg w-full h-full relative"></div>
 
-            <!-- ゲームオーバー / スタート / 一時停止 オーバーレイ -->
+            <!-- オーバーレイメニュー -->
             <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-3 transition-opacity duration-300 z-30 m-1">
                 
-                <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.7</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.7.2</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -213,61 +201,45 @@
                     </button>
                 </div>
 
-                <!-- 💡【文章ルール解説 ＋ ミニ盤面図解付きルール画面】 -->
                 <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-1">
                     <h3 class="text-sm font-black text-amber-400 mb-0.5">遊び方ルール</h3>
                     <div class="text-[10px] text-slate-300 space-y-2 overflow-y-auto max-h-[220px] px-1 text-left w-full bg-slate-900/90 p-2 rounded-lg border border-slate-700 leading-relaxed">
                         
-                        <!-- 基本構造 -->
                         <div>
                             <p class="font-bold text-amber-300 text-[11px] mb-0.5">🌀 ゲームの基本構造</p>
                             <p>・<strong>3つのフェーズ</strong>: 「サウナ ➔ 水風呂 ➔ ととのい」の順に周回・変化します。</p>
                             <p>・<strong>ターゲット制限</strong>: 現在のフェーズに対応する色のブロックしか消せません。</p>
                         </div>
 
-                        <!-- 必殺技 熱波 -->
                         <div>
-                            <p class="font-bold text-orange-400 text-[11px] mb-0.5">🔥 必殺技「熱波（NEPPA）」</p>
-                            <p>・<strong>ゲージ蓄積</strong>: 通常ルールで雑念ブロック（灰）を消すと1個につき+5pt溜まります（20個で100%満タン）。</p>
+                            <p class="font-bold text-orange-400 text-[11px] mb-0.5">🔥 必殺技「熱波」</p>
+                            <p>・<strong>ゲージ蓄積</strong>: 通常ルールで<strong>雑念ブロック（灰）を消去したときのみ</strong>、1個につき+5pt溜まります（20個で100%満タン）。</p>
                             <p>・<strong>発動効果</strong>: ゲージが100%の時にボタンを押すと、下段3段にある全ブロックを一掃！ピンチを切り抜けられます！</p>
                         </div>
 
-                        <!-- サウナフェーズ -->
                         <div>
                             <p class="font-bold text-red-400 text-[11px] mb-0.5">🔥 サウナフェーズ（赤）</p>
-                            <p>・<strong>消し方</strong>: 赤ブロックで内部まで完全に埋まった3×3以上の正方形を作ると消去され、次の水風呂フェーズへ切り替わります！</p>
-                            <p class="text-slate-400 text-[9px] mb-1">※ 2×2以下や、中身に隙間・別ブロックが混ざっている正方形は消えません。</p>
+                            <p>・赤ブロックで内部まで完全に埋まった3×3以上の正方形を作ると消去され、次の水風呂フェーズへ切り替わります！</p>
                         </div>
 
-                        <!-- 水風呂フェーズ -->
                         <div>
                             <p class="font-bold text-blue-400 text-[11px] mb-0.5">💧 水風呂フェーズ（青）</p>
-                            <p>・<strong>消し方</strong>: 青ブロックを左右の端までつなぐ経路を作ると消去され、次のととのいフェーズへ切り替わります！</p>
-                            <p class="text-slate-400 text-[9px] mb-1">※ 開通した最短ルートだけでなく、直接接している隣接青ブロックも巻き込んで一気に消去されます！</p>
+                            <p>・青ブロックを左右の端までつなぐ経路を作ると消去され、次のととのいフェーズへ切り替わります！</p>
                         </div>
 
-                        <!-- ととのいフェーズ -->
                         <div>
                             <p class="font-bold text-green-400 text-[11px] mb-0.5">🌿 ととのいフェーズ（緑）</p>
-                            <p>・<strong>消し方</strong>: 緑ブロックを上下左右に4つ以上つなぐと消去！</p>
-                            <p>・<strong>進行</strong>: 消すたびに「と...とと...ととの...ととのったー！」とステップが進みます（全4回）。</p>
-                            <p class="mb-1">・<strong>サウナへの復帰</strong>: 4回目の消去（ととのったー！）でフェーズ達成となり、盤面がリフレッシュされて最初のサウナフェーズへと戻ります！</p>
+                            <p>・緑ブロックを上下左右に4つ以上つなぐと消去！4回クリアで最初のサウナフェーズへ復帰します。</p>
                         </div>
 
-                        <!-- 雑念ブロック -->
                         <div>
                             <p class="font-bold text-gray-300 text-[11px] mb-0.5">💀 雑念ブロック（灰）</p>
-                            <p>・<strong>特徴</strong>: どのフェーズでも消すことができない邪魔なブロックです。</p>
-                            <p>・<strong>浄化</strong>: 「ととのいフェーズ」をクリア（4回消去）することで、盤面の雑念が全浄化され、すっきりした状態でサウナフェーズを再開できます！</p>
+                            <p>・どのフェーズでも直接消せない邪魔なブロックですが、消去に巻き込んで消すと熱波ゲージが溜まります！</p>
                         </div>
 
-                        <!-- スコア仕様 -->
                         <div>
                             <p class="font-bold text-amber-400 text-[11px] mb-0.5">🏆 スコアとボーナス仕様</p>
-                            <p>・<strong>基本点</strong>: サウナ15点/個、水風呂20点/個、ととのい50点/個、熱波直接消去10点/個</p>
-                            <p>・<strong>正方形ボーナス</strong>: 3×3(200点)、4×4(500点)、5×5(1000点)、6×6(2000点)</p>
-                            <p>・<strong>ととのったー！達成ボーナス</strong>: 1000点</p>
-                            <p>・<strong>雑念浄化ボーナス</strong>: クリア時の盤面雑念数 × 50点</p>
+                            <p>・基本点: サウナ15点/個、水風呂20点/個、ととのい50点/個、熱波直接消去10点/個</p>
                         </div>
                     </div>
                     <button onclick="hideRules()" class="mt-1 w-full max-w-[160px] py-1.5 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white shadow">
@@ -279,7 +251,7 @@
         </div>
     </main>
 
-    <!-- スマートフォン用タッチ操作ボタン -->
+    <!-- タッチ操作ボタン -->
     <footer class="w-full max-w-md grid grid-cols-4 gap-1.5 pb-1">
         <button 
             ontouchstart="handleTouchStart(event, -1)" ontouchend="handleTouchEnd(event)" onmousedown="handleMouseDown(-1)" onmouseup="handleMouseUp()" onmouseleave="handleMouseUp()"
@@ -335,7 +307,6 @@
         let lastClearPhase = null;
         let isChaining = false;
 
-        // 💡 熱波ゲージ変数 (0〜100)
         let neppaGauge = 0;
 
         let isGameOver = true;
@@ -623,7 +594,7 @@
                 localStorage.setItem('totonos_highscore', highScore);
                 highscoreEl.textContent = highScore;
             }
-            menuMainEl.classList.remove('hidden');
+            menuMainEl.classList.add('hidden');
             menuRulesEl.classList.add('hidden');
             startBtnEl.onclick = startGame;
             overlayTitleEl.textContent = "GAME OVER";
@@ -805,7 +776,6 @@
                 let clearedCoords = [];
                 let actionType = null;
                 let saunaScoreAdd = 0;
-                let clearedJammersCount = 0;
 
                 if (currentPhase === PHASE_SAUNA) {
                     let saunaData = getSaunaClearData();
@@ -821,7 +791,8 @@
                 }
 
                 if (clearedCoords.length > 0) {
-                    // 通常消去された雑念ブロック数をカウントして熱波ゲージを加算 (+5pt / 1個)
+                    // 💡 仕様準拠：通常消去時に巻き込まれた「雑念ブロック（灰）」の個数をカウントして熱波ゲージを加算 (+5pt / 1個)
+                    let clearedJammersCount = 0;
                     for (let cell of clearedCoords) {
                         if (board[cell.r][cell.c] === TYPE_JAMMER) {
                             clearedJammersCount++;
@@ -963,20 +934,17 @@
             stepChain();
         }
 
-        // 💡 必殺技「熱波」発動処理
+        // 熱波発動処理
         function triggerNeppa() {
             if (isGameOver || isPaused || neppaGauge < 100) return;
 
-            // 1. ゲージ消費
             neppaGauge = 0;
             updateNeppaUI();
 
-            // 操作中のピースをいったんロック・キャンセル
             if (currentPiece) {
                 currentPiece = null;
             }
 
-            // 2. 盤面下段3段 (行 9, 10, 11) の全ブロック集計＆消去
             let clearedCount = 0;
             let targetRows = [9, 10, 11];
             let clearedCoords = [];
@@ -991,7 +959,6 @@
             });
 
             if (clearedCount > 0) {
-                // 視覚エフェクト (フラッシュ＆クリアアニメ)
                 boardContainerEl.classList.add('neppa-flash-anim');
                 setTimeout(() => boardContainerEl.classList.remove('neppa-flash-anim'), 800);
 
@@ -1007,7 +974,6 @@
                         board[pt.r][pt.c] = TYPE_EMPTY;
                     });
 
-                    // 熱波スコア加算 (1個 × 10点)
                     let neppaScoreAdd = clearedCount * 10;
                     score += neppaScoreAdd;
                     scoreEl.textContent = score;
@@ -1015,7 +981,6 @@
                     showFloatingMessage(`🔥 熱波発動！ 下段一掃 +${neppaScoreAdd}点`, window.innerWidth/2, 230, "text-orange-400");
                     showTotonottaBanner("🔥 熱波到来！🔥");
 
-                    // 重力処理 ➔ 連鎖・判定
                     applyGravityWithAnimation(() => {
                         processClearsAndGravity(() => {
                             spawnNewPiece();
