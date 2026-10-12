@@ -84,7 +84,7 @@
             z-index: 25;
         }
 
-        /* 水風呂のルート＆巻き込みトレース（雷・電気エフェクト） */
+        /* 水風呂のルート＆巻き込みトレース */
         .cold-trace {
             box-shadow: 0 0 15px 4px rgba(77, 171, 247, 1), inset 0 0 10px rgba(255, 255, 255, 1);
             filter: brightness(2.2);
@@ -166,7 +166,7 @@
             </div>
 
             <!-- ゲームオーバー / スタート / 一時停止 オーバーレイ -->
-            <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 transition-opacity duration-300 z-30 m-2">
+            <div id="overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-3 transition-opacity duration-300 z-30 m-2">
                 
                 <!-- スタート画面メインコンテンツ -->
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
@@ -177,54 +177,94 @@
                         ゲームスタート
                     </button>
                     <button onclick="showRules()" class="w-full max-w-[200px] py-2.5 bg-slate-700 hover:bg-slate-600 font-bold rounded-xl text-sm glossy active:scale-95 transition shadow text-slate-200">
-                        ルール
+                        ルールガイド 📖
                     </button>
                 </div>
 
-                <!-- ルール説明画面 (水風呂の巻き込みルールを更新) -->
-                <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-2">
-                    <h3 class="text-lg font-black text-amber-400 mb-1">遊び方ルール</h3>
-                    <div class="text-[11px] text-slate-300 space-y-2.5 overflow-y-auto max-h-[230px] px-2 text-left w-full bg-slate-900/90 p-2.5 rounded-lg border border-slate-700 leading-relaxed">
-                        <div>
-                            <p class="font-bold text-amber-300 text-xs mb-0.5">🌀 ゲームの基本構造</p>
-                            <p>・<strong>3つのフェーズ</strong>: 「サウナ ➔ 水風呂 ➔ ととのい」の順に周回・変化します。</p>
-                            <p>・<strong>ターゲット制限</strong>: 現在のフェーズに対応する色のブロックしか消せません。</p>
+                <!-- 💡【ビジュアル付きルール解説画面】 -->
+                <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-1">
+                    <h3 class="text-base font-black text-amber-400 mb-1">各ブロックの消し方図解</h3>
+                    
+                    <div class="w-full space-y-2 overflow-y-auto max-h-[260px] px-1 text-left bg-slate-900/95 p-2 rounded-xl border border-slate-700 text-[11px] leading-tight">
+                        
+                        <!-- サウナフェーズ解説カード -->
+                        <div class="bg-slate-800/80 p-2 rounded-lg border border-red-500/50 flex flex-col gap-1.5">
+                            <div class="flex items-center gap-1.5 font-bold text-red-400">
+                                <span class="bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded font-black">1. サウナ</span>
+                                3×3以上の赤正方形で消去！
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <!-- ミニ盤面ビジュアル図解 (サウナ) -->
+                                <div class="grid grid-cols-3 gap-0.5 bg-slate-950 p-1 rounded border-2 border-amber-400 shadow-md shrink-0">
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                    <div class="w-5 h-5 rounded-sm block-red flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white"><use href="#icon-fire"/></svg></div>
+                                </div>
+                                <div class="text-[10px] text-slate-300">
+                                    隙間なく内部まで赤で埋まった正方形を作ると、ゴールドに光って水風呂へ遷移！<br>
+                                    <span class="text-amber-400">※2×2や隙間ありは不可</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div>
-                            <p class="font-bold text-red-400 text-xs mb-0.5">🔥 サウナフェーズ（赤）</p>
-                            <p>・<strong>消し方</strong>: 赤ブロックで内部まで完全に埋まった3×3以上の正方形を作ると消去され、次の水風呂フェーズへ切り替わります！</p>
-                            <p class="text-slate-400 text-[10px]">※ 2×2以下や、中身に隙間・別ブロックが混ざっている正方形は消えません。</p>
+                        <!-- 水風呂フェーズ解説カード -->
+                        <div class="bg-slate-800/80 p-2 rounded-lg border border-blue-500/50 flex flex-col gap-1.5">
+                            <div class="flex items-center gap-1.5 font-bold text-blue-400">
+                                <span class="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded font-black">2. 水風呂</span>
+                                左右をつなぐ ＋ 直近隣接を消去！
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <!-- ミニ盤面ビジュアル図解 (水風呂) -->
+                                <div class="grid grid-cols-4 gap-0.5 bg-slate-950 p-1 rounded border border-blue-400 shadow-md shrink-0">
+                                    <!-- 最短ルート (光る枠) -->
+                                    <div class="w-4 h-4 rounded-sm block-blue ring-1 ring-amber-300"></div>
+                                    <div class="w-4 h-4 rounded-sm block-blue ring-1 ring-amber-300"></div>
+                                    <div class="w-4 h-4 rounded-sm block-blue ring-1 ring-amber-300"></div>
+                                    <div class="w-4 h-4 rounded-sm block-blue ring-1 ring-amber-300"></div>
+                                    <!-- 隣接 (消去対象) -->
+                                    <div class="w-4 h-4 rounded-sm bg-slate-900 border border-slate-800"></div>
+                                    <div class="w-4 h-4 rounded-sm block-blue border border-dashed border-cyan-200"></div>
+                                    <div class="w-4 h-4 rounded-sm bg-slate-900 border border-slate-800"></div>
+                                    <div class="w-4 h-4 rounded-sm bg-slate-900 border border-slate-800"></div>
+                                </div>
+                                <div class="text-[10px] text-slate-300">
+                                    左右が開通すると<span class="text-amber-300">最短ルート</span>＋<span class="text-cyan-300">直接接している青</span>まで一括で消去！<br>
+                                    <span class="text-slate-400">※2個離れた青は残ります</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div>
-                            <p class="font-bold text-blue-400 text-xs mb-0.5">💧 水風呂フェーズ（青）</p>
-                            <p>・<strong>消し方</strong>: 青ブロックを左右の端までつなぐ経路を作ると消去され、次のととのいフェーズへ切り替わります！</p>
-                            <p class="text-slate-400 text-[10px]">※ 開通したルートだけでなく、<strong>隣接する青ブロックも巻き込んで一気に全消去</strong>されます！溜まった盤面をリフレッシュする大チャンス！</p>
+                        <!-- ととのいフェーズ解説カード -->
+                        <div class="bg-slate-800/80 p-2 rounded-lg border border-green-500/50 flex flex-col gap-1.5">
+                            <div class="flex items-center gap-1.5 font-bold text-green-400">
+                                <span class="bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded font-black">3. ととのい</span>
+                                4つ以上連結で消去 ➔ 雑念浄化！
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <!-- ミニ盤面ビジュアル図解 (ととのい) -->
+                                <div class="grid grid-cols-3 gap-0.5 bg-slate-950 p-1 rounded border border-green-400 shadow-md shrink-0">
+                                    <div class="w-4 h-4 rounded-sm block-green"></div>
+                                    <div class="w-4 h-4 rounded-sm block-green"></div>
+                                    <div class="w-4 h-4 rounded-sm bg-slate-900 border border-slate-800"></div>
+                                    <div class="w-4 h-4 rounded-sm block-green"></div>
+                                    <div class="w-4 h-4 rounded-sm block-green"></div>
+                                    <div class="w-4 h-4 rounded-sm block-gray"></div>
+                                </div>
+                                <div class="text-[10px] text-slate-300">
+                                    緑を4個以上つなげて4回消去（ととのったー！）すると、邪魔な<span class="text-gray-400">雑念ブロック（灰）</span>が全浄化！
+                                </div>
+                            </div>
                         </div>
 
-                        <div>
-                            <p class="font-bold text-green-400 text-xs mb-0.5">🌿 ととのいフェーズ（緑）</p>
-                            <p>・<strong>消し方</strong>: 緑ブロックを上下左右に4つ以上つなぐと消去！</p>
-                            <p>・<strong>進行</strong>: 消すたびに「と...とと...ととの...ととのったー！」とステップが進みます（全4回）。</p>
-                            <p>・<strong>サウナへの復帰</strong>: 4回目の消去（ととのったー！）でフェーズ達成となり、盤面がリフレッシュされて最初のサウナフェーズへと戻ります！</p>
-                        </div>
-
-                        <div>
-                            <p class="font-bold text-gray-300 text-xs mb-0.5">💀 雑念ブロック（灰）</p>
-                            <p>・<strong>特徴</strong>: どのフェーズでも消すことができない邪魔なブロックです。</p>
-                            <p>・<strong>浄化</strong>: 「ととのいフェーズ」をクリア（4回消去）することで、盤面の雑念が全浄化され、すっきりした状態でサウナフェーズを再開できます！</p>
-                        </div>
-
-                        <div>
-                            <p class="font-bold text-amber-400 text-xs mb-0.5">🏆 スコアとボーナス仕様</p>
-                            <p>・<strong>基本点</strong>: サウナ10点/個、水風呂20点/個、ととのい50点/個</p>
-                            <p>・<strong>正方形ボーナス</strong>: 3×3(150点)、4×4(400点)、5×5(750点)、6×6(1200点)</p>
-                            <p>・<strong>ととのったー！達成ボーナス</strong>: 500点</p>
-                            <p>・<strong>雑念浄化ボーナス</strong>: クリア時の盤面雑念数 × 30点</p>
-                        </div>
                     </div>
-                    <button onclick="hideRules()" class="mt-1 w-full max-w-[180px] py-1.5 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white">
+
+                    <button onclick="hideRules()" class="mt-1 w-full max-w-[180px] py-1.5 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white shadow">
                         戻る
                     </button>
                 </div>
@@ -1026,7 +1066,6 @@
             return { clearedCoords, totalScore };
         }
 
-        // 水風呂（開通最短ルート ＋ 隣接青ブロックの一括巻き込み判定）
         function getColdBathClearCoords() {
             let queue = [];
             let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
@@ -1083,30 +1122,29 @@
                 curr = prev[curr.r][curr.c];
             }
 
-            // 💡 【巻き込み処理】最短ルート上の各マスから隣接する全青ブロックを塗りつぶし探索(BFS)
-            let finalClearCoords = [];
-            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
-            let floodQueue = [...pathCoords];
-
-            floodQueue.forEach(pt => {
-                visited[pt.r][pt.c] = true;
+            // 最短経路に直接隣接（距離1）する青ブロックまでを含めて取得
+            let finalClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            
+            pathCoords.forEach(pt => {
+                finalClearMap[pt.r][pt.c] = true;
+                let nbrs = [
+                    {r: pt.r - 1, c: pt.c}, {r: pt.r + 1, c: pt.c},
+                    {r: pt.r, c: pt.c - 1}, {r: pt.r, c: pt.c + 1}
+                ];
+                nbrs.forEach(n => {
+                    if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
+                        if (board[n.r][n.c] === TYPE_COLD) {
+                            finalClearMap[n.r][n.c] = true;
+                        }
+                    }
+                });
             });
 
-            while (floodQueue.length > 0) {
-                let node = floodQueue.shift();
-                finalClearCoords.push(node);
-
-                let nbrs = [
-                    {r: node.r - 1, c: node.c}, {r: node.r + 1, c: node.c},
-                    {r: node.r, c: node.c - 1}, {r: node.r, c: node.c + 1}
-                ];
-
-                for (let n of nbrs) {
-                    if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
-                        if (board[n.r][n.c] === TYPE_COLD && !visited[n.r][n.c]) {
-                            visited[n.r][n.c] = true;
-                            floodQueue.push(n);
-                        }
+            let finalClearCoords = [];
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (finalClearMap[r][c]) {
+                        finalClearCoords.push({r, c});
                     }
                 }
             }
