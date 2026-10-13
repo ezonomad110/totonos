@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -191,7 +190,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.2</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.4</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -234,8 +233,8 @@
                         </div>
 
                         <div>
-                            <p class="font-bold text-amber-400 text-[11px] mb-0.5">🏆 コンボボーナス</p>
-                            <p>・フェーズ跨ぎなどの連続消去で倍率アップ（2コンボ目以降 $2^{\text{コンボ}-1} \times 1.5$ 倍）。</p>
+                            <p class="font-bold text-amber-400 text-[11px] mb-0.5">🏆 3連コンボボーナス</p>
+                            <p>・「ととのい ➔ サウナ ➔ 水風呂」などのフェーズまたぎ連続消去で倍率が正しく連鎖アップ ($2^{\text{コンボ}-1} \times 1.5$ 倍)。</p>
                         </div>
                     </div>
                     <button onclick="hideRules()" class="mt-1 w-full max-w-[160px] py-1.5 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white shadow">
@@ -705,7 +704,6 @@
             return true;
         }
 
-        // 通常パズル時のスコア加算（熱波ゲージ蓄積対象）
         function addScore(amount) {
             score += amount;
             scoreEl.textContent = score;
@@ -755,6 +753,7 @@
             });
         }
 
+        // 💡 3連コンボを含むフェーズ循環の連鎖判定を完璧にハンドリングするよう修正
         function evaluateCombo(currentClearedPhase) {
             let comboMultiplied = false;
 
@@ -762,10 +761,15 @@
                 if (lastClearPhase === null) {
                     phaseComboCount = 1;
                 } else {
-                    if (lastClearPhase === PHASE_TOTONO && currentClearedPhase === PHASE_SAUNA) {
+                    // 循環ルート：ととのい ➔ サウナ、サウナ ➔ 水風呂、水風呂 ➔ ととのい
+                    if (
+                        (lastClearPhase === PHASE_TOTONO && currentClearedPhase === PHASE_SAUNA) ||
+                        (lastClearPhase === PHASE_SAUNA && currentClearedPhase === PHASE_COLD) ||
+                        (lastClearPhase === PHASE_COLD && currentClearedPhase === PHASE_TOTONO)
+                    ) {
                         phaseComboCount++;
                         comboMultiplied = true;
-                    } else if (lastClearPhase === PHASE_SAUNA && currentClearedPhase === PHASE_COLD) {
+                    } else if (lastClearPhase === currentClearedPhase) {
                         phaseComboCount++;
                         comboMultiplied = true;
                     } else {
@@ -774,15 +778,12 @@
                 }
                 isChaining = true;
             } else {
-                if (lastClearPhase === PHASE_SAUNA && currentClearedPhase === PHASE_COLD) {
-                    phaseComboCount++;
-                    comboMultiplied = true;
-                } else if (lastClearPhase === PHASE_TOTONO && currentClearedPhase === PHASE_SAUNA) {
-                    phaseComboCount++;
-                    comboMultiplied = true;
-                } else if (lastClearPhase === PHASE_COLD && currentClearedPhase === PHASE_TOTONO) {
-                    phaseComboCount = 1;
-                } else if (lastClearPhase === currentClearedPhase) {
+                if (
+                    (lastClearPhase === PHASE_TOTONO && currentClearedPhase === PHASE_SAUNA) ||
+                    (lastClearPhase === PHASE_SAUNA && currentClearedPhase === PHASE_COLD) ||
+                    (lastClearPhase === PHASE_COLD && currentClearedPhase === PHASE_TOTONO) ||
+                    (lastClearPhase === currentClearedPhase)
+                ) {
                     phaseComboCount++;
                     comboMultiplied = true;
                 } else {
@@ -804,6 +805,7 @@
                 let clearedCoords = [];
                 let actionType = null;
                 let saunaScoreAdd = 0;
+                let coldScoreAdd = 0;
 
                 if (currentPhase === PHASE_SAUNA) {
                     let saunaData = getSaunaClearData();
@@ -813,6 +815,7 @@
                 } else if (currentPhase === PHASE_COLD) {
                     let coldData = getColdBathClearData();
                     clearedCoords = coldData.clearedCoords;
+                    coldScoreAdd = coldData.totalScore;
                     actionType = 'COLD';
                 } else if (currentPhase === PHASE_TOTONO) {
                     clearedCoords = getTotonoClearCoords();
@@ -868,8 +871,7 @@
                             } else if (actionType === 'COLD') {
                                 let currentCombo = evaluateCombo(PHASE_COLD);
                                 let multiplier = currentCombo > 1 ? Math.pow(2, currentCombo - 1) * 1.5 : 1;
-                                let coldData = getColdBathClearData();
-                                let finalColdScore = Math.floor(coldData.totalScore * multiplier);
+                                let finalColdScore = Math.floor(coldScoreAdd * multiplier);
 
                                 addScore(finalColdScore);
 
@@ -949,7 +951,6 @@
             stepChain();
         }
 
-        // 熱波発動処理（熱波直接消去のスコアはゲージを増やさない）
         function triggerNeppa() {
             if (isGameOver || isPaused || neppaGauge < 100) return;
 
@@ -1151,7 +1152,6 @@
             return { clearedCoords, totalScore };
         }
 
-        // 水風呂スコア強化（基本35点/個 ＋ ルート開通ボーナス＋300点）
         function getColdBathClearData() {
             let queue = [];
             let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
