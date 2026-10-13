@@ -1,3 +1,5 @@
+熱波発動後のフリーズ不具合（isNeppaProcessing フラグの解除タイミング）を修正した、v2.8.7 最新コードの完全版です。
+以下のコードをコピーして、ファイルに丸ごと上書き保存してください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -203,7 +205,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.6</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.7</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -372,7 +374,6 @@
         let lastClearPhase = null;
         let isChaining = false;
 
-        // 💡 独立した熱波ゲージ管理用変数
         let neppaGauge = 0;
         let isNeppaProcessing = false;
 
@@ -550,7 +551,6 @@
             lastClearPhase = null;
             isChaining = false;
             
-            // 💡 独立変数の初期化
             neppaGauge = 0;
             isNeppaProcessing = false;
 
@@ -781,7 +781,6 @@
             return true;
         }
 
-        // 💡 独立したスコア加算と熱波ゲージの蓄積（100点ごとに1pt、上限100）
         function addScore(amount) {
             score += amount;
             scoreEl.textContent = score;
@@ -1027,7 +1026,7 @@
             stepChain();
         }
 
-        // 💡 熱波発動処理：currentPiece保持、ループ競合防止、専用演出、独立ゲージリセット
+        // 💡 修正：重力落下アニメーション完了時点で isNeppaProcessing を false に解除
         function triggerNeppa() {
             if (isGameOver || isPaused || isNeppaProcessing || neppaGauge < 100) return;
 
@@ -1072,10 +1071,12 @@
                 }
 
                 applyGravityWithAnimation(() => {
+                    // 💡 重力処理が終わったタイミングでフラグを正常に解除
+                    isNeppaProcessing = false;
+
                     // 操作中のブロックが重力処理後の盤面と干渉しないか位置検証
                     if (currentPiece) {
                         if (!isValidPosition(currentPiece.x, currentPiece.y, currentPiece.rot)) {
-                            // もし重なる場合は安全な上に移動または退避
                             let safeY = currentPiece.y;
                             while (safeY >= 0 && !isValidPosition(currentPiece.x, safeY, currentPiece.rot)) {
                                 safeY--;
@@ -1090,7 +1091,6 @@
 
                     // 連鎖処理の実行
                     processClearsAndGravity(() => {
-                        isNeppaProcessing = false;
                         if (!currentPiece && !isGameOver) {
                             spawnNewPiece();
                         } else {
@@ -1501,3 +1501,4 @@
     </script>
 </body>
 </html>
+
