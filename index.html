@@ -190,7 +190,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.4</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.8.5</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -202,40 +202,100 @@
 
                 <!-- ルール画面 -->
                 <div id="menu-rules" class="hidden flex flex-col items-center justify-between w-full h-full py-1">
-                    <h3 class="text-sm font-black text-amber-400 mb-0.5">遊び方ルール</h3>
-                    <div class="text-[10px] text-slate-300 space-y-2 overflow-y-auto max-h-[220px] px-1 text-left w-full bg-slate-900/90 p-2 rounded-lg border border-slate-700 leading-relaxed">
+                    <h3 class="text-sm font-black text-amber-400 mb-1">遊び方ルール</h3>
+                    <div class="text-[10px] text-slate-300 space-y-3 overflow-y-auto max-h-[210px] px-1.5 text-left w-full bg-slate-900/90 p-2.5 rounded-lg border border-slate-700 leading-relaxed">
                         
+                        <!-- 1. ゲームの基本構造とルール -->
                         <div>
-                            <p class="font-bold text-amber-300 text-[11px] mb-0.5">🌀 ゲームの基本構造</p>
+                            <p class="font-bold text-amber-300 text-[11px] mb-0.5">1. ゲームの基本構造とルール</p>
                             <p>・<strong>3つのフェーズ</strong>: 「サウナ ➔ 水風呂 ➔ ととのい」の順に周回・変化します。</p>
                             <p>・<strong>ターゲット制限</strong>: 現在のフェーズに対応する色のブロックしか消せません。</p>
                         </div>
 
+                        <!-- 2. 各ブロックの説明と消し方 -->
                         <div>
-                            <p class="font-bold text-orange-400 text-[11px] mb-0.5">🔥 必殺技「熱波」</p>
+                            <p class="font-bold text-emerald-300 text-[11px] mb-1">2. 各ブロックの説明と消し方</p>
+                            
+                            <!-- サウナ -->
+                            <div class="bg-slate-950 p-2 rounded mb-1.5 border border-red-500/40">
+                                <div class="flex items-center gap-1.5 font-bold text-red-400 mb-0.5">
+                                    <span>🔥 サウナ（赤）</span>
+                                </div>
+                                <div class="text-[9px] text-slate-300 space-y-0.5">
+                                    <p>・<strong>消し方</strong>: 3×3以上の正方形を作って消去</p>
+                                    <p>・<strong>ポイント</strong>: 正方形が大きほどボーナスアップ！</p>
+                                    <!-- サンプル画像風グリッド (3x3赤) -->
+                                    <div class="grid grid-cols-3 gap-0.5 w-12 h-12 my-1 bg-slate-900 p-0.5 rounded border border-red-500/50">
+                                        <div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div>
+                                        <div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div>
+                                        <div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 水風呂 -->
+                            <div class="bg-slate-950 p-2 rounded mb-1.5 border border-blue-500/40">
+                                <div class="flex items-center gap-1.5 font-bold text-blue-400 mb-0.5">
+                                    <span>💧 水風呂（青）</span>
+                                </div>
+                                <div class="text-[9px] text-slate-300 space-y-0.5">
+                                    <p>・<strong>消し方</strong>: 左右の端（左端から右端）へルートを繋げて消去</p>
+                                    <p>・<strong>ポイント</strong>: ルート開通で大量得点＆次のフェーズへ！</p>
+                                    <!-- サンプル画像風グリッド (横一列) -->
+                                    <div class="grid grid-cols-4 gap-0.5 w-16 h-4 my-1 bg-slate-900 p-0.5 rounded border border-blue-500/50">
+                                        <div class="block-blue rounded-[2px]"></div><div class="block-blue rounded-[2px]"></div><div class="block-blue rounded-[2px]"></div><div class="block-blue rounded-[2px]"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ととのい -->
+                            <div class="bg-slate-950 p-2 rounded mb-1.5 border border-green-500/40">
+                                <div class="flex items-center gap-1.5 font-bold text-green-400 mb-0.5">
+                                    <span>🌿 ととのい（緑）</span>
+                                </div>
+                                <div class="text-[9px] text-slate-300 space-y-0.5">
+                                    <p>・<strong>消し方</strong>: 4個以上をL字型などに繋げて消去</p>
+                                    <p>・<strong>ポイント</strong>: 4回クリアで「ととのったー！」（＋1000点）＆雑念（灰）をすべて浄化！</p>
+                                    <!-- サンプル画像風グリッド (L字型) -->
+                                    <div class="grid grid-cols-3 gap-0.5 w-12 h-8 my-1 bg-slate-900 p-0.5 rounded border border-green-500/50">
+                                        <div class="block-green rounded-[2px]"></div><div></div><div></div>
+                                        <div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 雑念 -->
+                            <div class="bg-slate-950 p-2 rounded border border-slate-600">
+                                <div class="flex items-center gap-1.5 font-bold text-slate-400 mb-0.5">
+                                    <span>🌀 雑念ブロック（灰）</span>
+                                </div>
+                                <div class="text-[9px] text-slate-300 space-y-0.5">
+                                    <p>・<strong>消し方</strong>: 単体では消せないお邪魔ブロック</p>
+                                    <p>・<strong>ポイント</strong>: ととのいフェーズを4回完遂した時にすべて自動浄化されます！</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. 必殺技「熱波」 -->
+                        <div>
+                            <p class="font-bold text-orange-400 text-[11px] mb-0.5">3. 必殺技「熱波」</p>
                             <p>・<strong>ゲージ蓄積</strong>: 通常パズルスコア<strong>100点ごとに1pt</strong>溜まります（10,000点で100%）。熱波発動時の直接消去スコアはゲージを増やしません。</p>
-                            <p>・<strong>発動効果</strong>: 下段3段にある全ブロックを一掃！</p>
+                            <p>・<strong>発動効果</strong>: 下段3段にある全ブロックを一掃します！</p>
                         </div>
 
+                        <!-- 4. スコア計算 -->
                         <div>
-                            <p class="font-bold text-red-400 text-[11px] mb-0.5">🔥 サウナフェーズ（赤）</p>
-                            <p>・3×3以上の赤正方形で消去（基本15点/個 ＋ 正方形ボーナス）。</p>
+                            <p class="font-bold text-amber-400 text-[11px] mb-0.5">4. スコア計算</p>
+                            <p class="text-amber-200 font-bold mt-1">【各ブロックの点数】</p>
+                            <p>・<strong>サウナ</strong>: 基本15点/個 ＋ 正方形ボーナス（3×3: +200, 4×4: +500 ...）</p>
+                            <p>・<strong>水風呂</strong>: 基本35点/個 ＋ ルート開通ボーナス（+300点）</p>
+                            <p>・<strong>ととのい</strong>: 基本50点/個 ＋ 完遂ボーナス（+1000点） ＋ 雑念浄化（1個につき+50点）</p>
+                            
+                            <p class="text-amber-200 font-bold mt-1.5">【フェーズコンボの加算】</p>
+                            <p>・「ととのい ➔ サウナ ➔ 水風呂」などのフェーズ循環またぎ、または同一フェーズ内の連続消去で倍率が連鎖アップします。</p>
+                            <p>・<strong>コンボ倍率</strong>: 2コンボ目以降 $2^{\text{コンボ}-1} \times 1.5$ 倍（2コンボ目: 1.5倍 / 3コンボ目: 3.0倍）</p>
                         </div>
 
-                        <div>
-                            <p class="font-bold text-blue-400 text-[11px] mb-0.5">💧 水風呂フェーズ（青）</p>
-                            <p>・左右を繋げて消去（基本35点/個 ＋ ルート開通ボーナス＋300点）。</p>
-                        </div>
-
-                        <div>
-                            <p class="font-bold text-green-400 text-[11px] mb-0.5">🌿 ととのいフェーズ（緑）</p>
-                            <p>・4個以上連結で消去（基本50点/個）。4回クリアで「ととのったー！」（＋1000点）＆雑念浄化！</p>
-                        </div>
-
-                        <div>
-                            <p class="font-bold text-amber-400 text-[11px] mb-0.5">🏆 3連コンボボーナス</p>
-                            <p>・「ととのい ➔ サウナ ➔ 水風呂」などのフェーズまたぎ連続消去で倍率が正しく連鎖アップ ($2^{\text{コンボ}-1} \times 1.5$ 倍)。</p>
-                        </div>
                     </div>
                     <button onclick="hideRules()" class="mt-1 w-full max-w-[160px] py-1.5 bg-slate-600 hover:bg-slate-500 font-bold rounded-xl text-xs glossy active:scale-95 transition text-white shadow">
                         戻る
@@ -753,7 +813,6 @@
             });
         }
 
-        // 💡 3連コンボを含むフェーズ循環の連鎖判定を完璧にハンドリングするよう修正
         function evaluateCombo(currentClearedPhase) {
             let comboMultiplied = false;
 
@@ -761,7 +820,6 @@
                 if (lastClearPhase === null) {
                     phaseComboCount = 1;
                 } else {
-                    // 循環ルート：ととのい ➔ サウナ、サウナ ➔ 水風呂、水風呂 ➔ ととのい
                     if (
                         (lastClearPhase === PHASE_TOTONO && currentClearedPhase === PHASE_SAUNA) ||
                         (lastClearPhase === PHASE_SAUNA && currentClearedPhase === PHASE_COLD) ||
