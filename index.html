@@ -1,3 +1,6 @@
+原因が分かりました！自力消去のときは通常の消去アニメーション（clearing-anim）がしっかり動いていたのに対し、4回完遂時の「一括浄化」では removeAllJammers() が即座にボードデータを空（TYPE_EMPTY）にしてしまっていたため、アニメーションなしで一瞬で消えてしまっていました。
+他のブロックと同じように、一括浄化時もしっかりと消去アニメーション（パチパチッと消える演出）を挟んでから消えるように修正します。
+以下の v3.1.1 最新コード をコピーして上書き保存してください。
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -225,7 +228,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.1.0 (雑念自力消去＆タメ実装)</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.1.1 (一括浄化アニメーション修正)</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -921,7 +924,6 @@
                     actionType = 'TOTONO';
                 }
 
-                // 雑念ブロックの自力4個以上消去チェック（常時有効）
                 if (clearedCoords.length === 0) {
                     let jammerCoords = getJammerClearCoords();
                     if (jammerCoords.length > 0) {
@@ -1016,47 +1018,56 @@
                                     
                                     showTotonottaBanner(bannerText);
 
-                                    // 4回完遂時の全雑念浄化（タメ演出を挟む）
+                                    // 4回完遂時の全雑念浄化（タメ演出 ＋ アニメーション付き消去）
                                     if (totonoClearStep >= 4) {
-                                        let jammerCount = 0;
+                                        let jammerCoords = [];
                                         for (let r = 0; r < ROWS; r++) {
                                             for (let c = 0; c < COLS; c++) {
                                                 if (board[r][c] === TYPE_JAMMER) {
-                                                    jammerCount++;
+                                                    jammerCoords.push({r, c});
                                                 }
                                             }
                                         }
                                         let achievementBonus = 1000;
-                                        let purificationBonus = jammerCount * 50;
+                                        let purificationBonus = jammerCoords.length * 50;
                                         
                                         addScore(achievementBonus + purificationBonus);
 
                                         showFloatingMessage(`🌿 ととのったー！ +${achievementBonus}点`, window.innerWidth/2, 230, "text-green-300");
 
-                                        // タメ演出（約0.8秒のウェイト＆雑念が光る演出）の追加
-                                        if (jammerCount > 0) {
-                                            for (let r = 0; r < ROWS; r++) {
-                                                for (let c = 0; c < COLS; c++) {
-                                                    if (board[r][c] === TYPE_JAMMER) {
-                                                        const el = document.getElementById(`cell-${r}-${c}`);
-                                                        if (el) el.classList.add('jammer-pulse');
-                                                    }
-                                                }
+                                        if (jammerCoords.length > 0) {
+                                            for (let pt of jammerCoords) {
+                                                const el = document.getElementById(`cell-${pt.r}-${pt.c}`);
+                                                if (el) el.classList.add('jammer-pulse');
                                             }
 
+                                            // タメ演出（約0.8秒ウェイト）の後に一括アニメーション消去
                                             setTimeout(() => {
-                                                showFloatingMessage(`✨ 雑念浄化 ${jammerCount}個 +${purificationBonus}点`, window.innerWidth/2, 270, "text-amber-300");
-                                                removeAllJammers();
-                                                saunaClearCount = 0;
-                                                currentPhase = PHASE_SAUNA;
-                                                totonoClearStep = 0;
-                                                nextPiece = generateRandomPiece();
-                                                stopBGM();
-                                                startBGM();
-                                                updateUI();
-                                                applyGravityWithAnimation(() => {
-                                                    setTimeout(stepChain, 400);
-                                                });
+                                                showFloatingMessage(`✨ 雑念浄化 ${jammerCoords.length}個 +${purificationBonus}点`, window.innerWidth/2, 270, "text-amber-300");
+                                                
+                                                for (let pt of jammerCoords) {
+                                                    const el = document.getElementById(`cell-${pt.r}-${pt.c}`);
+                                                    if (el) {
+                                                        el.classList.remove('jammer-pulse');
+                                                        el.classList.add('clearing-anim');
+                                                    }
+                                                }
+
+                                                setTimeout(() => {
+                                                    for (let pt of jammerCoords) {
+                                                        board[pt.r][pt.c] = TYPE_EMPTY;
+                                                    }
+                                                    saunaClearCount = 0;
+                                                    currentPhase = PHASE_SAUNA;
+                                                    totonoClearStep = 0;
+                                                    nextPiece = generateRandomPiece();
+                                                    stopBGM();
+                                                    startBGM();
+                                                    updateUI();
+                                                    applyGravityWithAnimation(() => {
+                                                        setTimeout(stepChain, 400);
+                                                    });
+                                                }, 650);
                                             }, 850);
                                             return;
                                         } else {
@@ -1070,7 +1081,6 @@
                                         }
                                     }
                                 } else {
-                                    // 雑念ブロック自力消去のスコア（1個につき30点など）
                                     let jammerScore = clearedCoords.length * 30;
                                     addScore(jammerScore);
                                     showFloatingMessage(`🌀 雑念消去 (+${jammerScore})`, window.innerWidth/2, 250, "text-slate-300");
@@ -1443,7 +1453,6 @@
             return [];
         }
 
-        // 雑念ブロックが4個以上繋がった場合の自力消去判定
         function getJammerClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
 
@@ -1479,16 +1488,6 @@
                 }
             }
             return [];
-        }
-
-        function removeAllJammers() {
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    if (board[r][c] === TYPE_JAMMER) {
-                        board[r][c] = TYPE_EMPTY;
-                    }
-                }
-            }
         }
 
         function movePiece(dx, dy) {
@@ -1605,3 +1604,4 @@
     </script>
 </body>
 </html>
+
