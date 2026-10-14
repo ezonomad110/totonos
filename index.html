@@ -32,7 +32,7 @@
         }
         .block-gray { 
             background: linear-gradient(135deg, #adb5bd 0%, #495057 100%);
-            border: 2px dotted rgba(255, 255, 255, 0.5);
+            border: 2px dotted rgba(255, 255, 255, 0.6);
         }
         .block-green { 
             background: linear-gradient(135deg, #69db7c 0%, #2b8a3e 100%);
@@ -111,6 +111,12 @@
 
         .totono-pulse {
             box-shadow: 0 0 15px 4px rgba(105, 219, 124, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.9);
+            transform: scale(1.08);
+            z-index: 25;
+        }
+
+        .jammer-pulse {
+            box-shadow: 0 0 15px 4px rgba(173, 181, 189, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.9);
             transform: scale(1.08);
             z-index: 25;
         }
@@ -219,7 +225,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.0.0 (オロポ実装)</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.1.0 (雑念自力消去＆タメ実装)</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -253,11 +259,6 @@
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
                                     <p>・<strong>消し方</strong>: 3×3以上の正方形を作って消去</p>
                                     <p>・<strong>ポイント</strong>: 正方形が大きいほどボーナスアップ！</p>
-                                    <div class="grid grid-cols-3 gap-0.5 w-12 h-12 my-1 bg-slate-900 p-0.5 rounded border border-red-500/50">
-                                        <div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div>
-                                        <div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div>
-                                        <div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -268,14 +269,7 @@
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
                                     <p>・<strong>消し方</strong>: 左右の端（左端から右端）へルートを繋げて消去（<strong>ジグザグでもOK！</strong>）</p>
-                                    <p>・<strong>ポイント</strong>: ルート上のブロックに加え、<strong>上下左右にぴったりくっついている水風呂ブロックも一緒にすべて消えます！</strong></p>
-                                    <div class="flex justify-center my-1.5">
-                                        <div class="grid grid-cols-7 gap-0.5 w-40 h-14 bg-slate-900 p-1 rounded border border-blue-500/50 items-center">
-                                            <div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div></div><div></div><div></div><div></div><div></div>
-                                            <div></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div></div>
-                                            <div></div><div></div><div></div><div></div><div></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div>
-                                        </div>
-                                    </div>
+                                    <p>・<strong>ポイント</strong>: ルート上のブロックに加え、<strong>上下左右にくっついている水風呂も一緒にすべて消えます！</strong></p>
                                 </div>
                             </div>
 
@@ -285,30 +279,8 @@
                                     <span>🌿 ととのい（緑）</span>
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
-                                    <p>・<strong>消し方</strong>: 4個以上を繋げて消去（<strong>L字型だけでなく、正方形や直線など4個以上ならどんな形でもOK！</strong>）</p>
-                                    <p>・<strong>ポイント</strong>: 4回クリアで「ととのったー！」（＋1000点）＆雑念（灰）をすべて浄化！</p>
-                                    <div class="flex gap-2 my-1 justify-center">
-                                        <div class="text-center">
-                                            <div class="grid grid-cols-2 gap-0.5 w-8 h-8 bg-slate-900 p-0.5 rounded border border-green-500/50">
-                                                <div class="block-green rounded-[2px]"></div><div></div>
-                                                <div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div>
-                                            </div>
-                                            <span class="text-[7px] text-slate-400">L字</span>
-                                        </div>
-                                        <div class="text-center">
-                                            <div class="grid grid-cols-2 gap-0.5 w-8 h-8 bg-slate-900 p-0.5 rounded border border-green-500/50">
-                                                <div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div>
-                                                <div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div>
-                                            </div>
-                                            <span class="text-[7px] text-slate-400">正方形</span>
-                                        </div>
-                                        <div class="text-center">
-                                            <div class="grid grid-cols-4 gap-0.5 w-16 h-4 bg-slate-900 p-0.5 rounded border border-green-500/50 mt-2">
-                                                <div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div>
-                                            </div>
-                                            <span class="text-[7px] text-slate-400 mt-1 block">直線</span>
-                                        </div>
-                                    </div>
+                                    <p>・<strong>消し方</strong>: 4個以上を繋げて消去（L字・正方形・直線など4個以上でOK！）</p>
+                                    <p>・<strong>ポイント</strong>: 4回クリアで「ととのったー！」（＋1000点）＆盤面の雑念をすべて浄化！</p>
                                 </div>
                             </div>
 
@@ -319,12 +291,7 @@
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
                                     <p>・<strong>特徴</strong>: 全フェーズで万能に活躍する特別なブロック！</p>
-                                    <p>・<strong>ポイント</strong>: 見た目はそのまま、サウナでは赤、水風呂では青、ととのいでは緑として扱われます！</p>
-                                    <div class="flex justify-center my-1">
-                                        <div class="w-6 h-6 block-oropo rounded flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-amber-100 icon-glow"><use href="#icon-oropo"/></svg>
-                                        </div>
-                                    </div>
+                                    <p>・<strong>ポイント</strong>: 見た目はそのまま、各フェーズの色として万能に機能します。</p>
                                 </div>
                             </div>
 
@@ -334,8 +301,8 @@
                                     <span>🌀 雑念ブロック（灰）</span>
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
-                                    <p>・<strong>消し方</strong>: 単体では消せないお邪魔ブロック</p>
-                                    <p>・<strong>ポイント</strong>: ととのいフェーズを4回完遂した時にすべて自動浄化されます！</p>
+                                    <p>・<strong>消し方</strong>: ととのいブロックと同様に、<strong>縦横に4個以上繋げると自力で消去可能！</strong></p>
+                                    <p>・<strong>ポイント</strong>: さらに、ととのいフェーズを4回完遂した時には、盤面上のすべての雑念が自動浄化されます！</p>
                                 </div>
                             </div>
                         </div>
@@ -343,21 +310,8 @@
                         <!-- 3. 必殺技「熱波」 -->
                         <div>
                             <p class="font-bold text-orange-400 text-[11px] mb-0.5">3. 必殺技「熱波」</p>
-                            <p>・<strong>ゲージ蓄積</strong>: 通常パズルスコア<strong>100点ごとに1pt</strong>溜まります（10,000点で100%）。熱波発動時の直接消去スコアはゲージを増やしません。</p>
+                            <p>・<strong>ゲージ蓄積</strong>: 通常パズルスコア<strong>100点ごとに1pt</strong>溜まります。</p>
                             <p>・<strong>発動効果</strong>: 下段3段にある全ブロックを一掃します！</p>
-                        </div>
-
-                        <!-- 4. スコア計算 -->
-                        <div>
-                            <p class="font-bold text-amber-400 text-[11px] mb-0.5">4. スコア計算</p>
-                            <p class="text-amber-200 font-bold mt-1">【各ブロックの点数】</p>
-                            <p>・<strong>サウナ</strong>: 基本15点/個 ＋ 正方形ボーナス（3×3: +200, 4×4: +500 ...）</p>
-                            <p>・<strong>水風呂</strong>: 基本35点/個 ＋ ルート開通ボーナス（+300点）</p>
-                            <p>・<strong>ととのい</strong>: 基本50点/個 ＋ 完遂ボーナス（+1000点） ＋ 雑念浄化（1個につき+50点）</p>
-                            
-                            <p class="text-amber-200 font-bold mt-1.5">【フェーズコンボの加算】</p>
-                            <p>・「ととのい ➔ サウナ ➔ 水風呂」などのフェーズ循環またぎ、または同一フェーズ内の連続消去で倍率が連鎖アップします。</p>
-                            <p>・<strong>コンボ倍率</strong>: 2コンボ目以降 $2^{\text{コンボ}-1} \times 1.5$ 倍（2コンボ目: 1.5倍 / 3コンボ目: 3.0倍）</p>
                         </div>
 
                     </div>
@@ -399,14 +353,10 @@
         <symbol id="icon-leaf" viewBox="0 0 24 24">
             <path fill="currentColor" d="M17 8C8 10 5.9 16.17 3.82 21.35L5.71 22l1-2.3A20.01 20.01 0 0 0 19 12c1.1-.03 2-.92 2-2.03 0-.95-.68-1.76-1.6-1.94L17 8zm-7 8c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
         </symbol>
-        <!-- オロポ用グラスSVG -->
         <symbol id="icon-oropo" viewBox="0 0 24 24">
-            <!-- グラス本体 -->
             <path fill="currentColor" opacity="0.95" d="M6 3h12l-1.5 17a2 2 0 0 1-2 1.8H9.5a2 2 0 0 1-2-1.8L6 3z"/>
-            <!-- 氷 / 泡 -->
             <rect x="8.5" y="6" width="3" height="3" rx="0.5" fill="#ffffff" opacity="0.9"/>
             <rect x="12.5" y="8" width="3.5" height="3.5" rx="0.5" fill="#ffffff" opacity="0.9"/>
-            <!-- ストロー -->
             <path d="M15 2l3-1.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
         </symbol>
     </svg>
@@ -420,9 +370,9 @@
         const TYPE_COLD = 2;
         const TYPE_JAMMER = 3;
         const TYPE_TOTONO = 4;
-        const TYPE_OROPO = 5; // オロポブロック
+        const TYPE_OROPO = 5;
 
-        const OROPO_SPAWN_RATE = 0.05; // オロポ出現率（ブロック単位で5%）
+        const OROPO_SPAWN_RATE = 0.05;
 
         const PHASE_SAUNA = 1;
         const PHASE_COLD = 2;
@@ -762,7 +712,6 @@
             overlayEl.classList.remove('opacity-0', 'pointer-events-none');
         }
 
-        // オロポの出現ロジック（ブロック単位で5%）
         function getRandomSingleBlockType() {
             if (Math.random() < OROPO_SPAWN_RATE) {
                 return TYPE_OROPO;
@@ -972,6 +921,15 @@
                     actionType = 'TOTONO';
                 }
 
+                // 雑念ブロックの自力4個以上消去チェック（常時有効）
+                if (clearedCoords.length === 0) {
+                    let jammerCoords = getJammerClearCoords();
+                    if (jammerCoords.length > 0) {
+                        clearedCoords = jammerCoords;
+                        actionType = 'JAMMER_SELF';
+                    }
+                }
+
                 if (clearedCoords.length > 0) {
                     for (let cell of clearedCoords) {
                         const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
@@ -979,6 +937,7 @@
                             if (actionType === 'SAUNA') cellEl.classList.add('sauna-highlight');
                             else if (actionType === 'COLD') cellEl.classList.add('cold-trace');
                             else if (actionType === 'TOTONO') cellEl.classList.add('totono-pulse');
+                            else if (actionType === 'JAMMER_SELF') cellEl.classList.add('jammer-pulse');
                         }
                     }
 
@@ -988,7 +947,7 @@
                         for (let cell of clearedCoords) {
                             const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
                             if (cellEl) {
-                                cellEl.classList.remove('sauna-highlight', 'cold-trace', 'totono-pulse');
+                                cellEl.classList.remove('sauna-highlight', 'cold-trace', 'totono-pulse', 'jammer-pulse');
                                 cellEl.classList.add('clearing-anim');
                             }
                         }
@@ -1039,52 +998,82 @@
                                     setTimeout(stepChain, 400);
                                 });
                                 return;
-                            } else if (actionType === 'TOTONO') {
-                                let currentCombo = evaluateCombo(PHASE_TOTONO);
-                                let baseTotonoScore = clearedCoords.length * 50;
-                                let finalTotonoScore = Math.floor(baseTotonoScore * (currentCombo > 1 ? Math.pow(2, currentCombo - 1) * 1.5 : 1));
-                                
-                                addScore(finalTotonoScore);
+                            } else if (actionType === 'TOTONO' || actionType === 'JAMMER_SELF') {
+                                if (actionType === 'TOTONO') {
+                                    let currentCombo = evaluateCombo(PHASE_TOTONO);
+                                    let baseTotonoScore = clearedCoords.length * 50;
+                                    let finalTotonoScore = Math.floor(baseTotonoScore * (currentCombo > 1 ? Math.pow(2, currentCombo - 1) * 1.5 : 1));
+                                    
+                                    addScore(finalTotonoScore);
 
-                                totonoClearStep++;
+                                    totonoClearStep++;
 
-                                let bannerText = "";
-                                if (totonoClearStep === 1) bannerText = "と...！";
-                                else if (totonoClearStep === 2) bannerText = "とと...！！";
-                                else if (totonoClearStep === 3) bannerText = "ととの...！！！";
-                                else if (totonoClearStep >= 4) bannerText = "ととのったー！✨";
-                                
-                                showTotonottaBanner(bannerText);
+                                    let bannerText = "";
+                                    if (totonoClearStep === 1) bannerText = "と...！";
+                                    else if (totonoClearStep === 2) bannerText = "とと...！！";
+                                    else if (totonoClearStep === 3) bannerText = "ととの...！！！";
+                                    else if (totonoClearStep >= 4) bannerText = "ととのったー！✨";
+                                    
+                                    showTotonottaBanner(bannerText);
 
-                                if (totonoClearStep >= 4) {
-                                    let jammerCount = 0;
-                                    for (let r = 0; r < ROWS; r++) {
-                                        for (let c = 0; c < COLS; c++) {
-                                            if (board[r][c] === TYPE_JAMMER) {
-                                                jammerCount++;
+                                    // 4回完遂時の全雑念浄化（タメ演出を挟む）
+                                    if (totonoClearStep >= 4) {
+                                        let jammerCount = 0;
+                                        for (let r = 0; r < ROWS; r++) {
+                                            for (let c = 0; c < COLS; c++) {
+                                                if (board[r][c] === TYPE_JAMMER) {
+                                                    jammerCount++;
+                                                }
                                             }
                                         }
-                                    }
-                                    let achievementBonus = 1000;
-                                    let purificationBonus = jammerCount * 50;
-                                    
-                                    addScore(achievementBonus + purificationBonus);
+                                        let achievementBonus = 1000;
+                                        let purificationBonus = jammerCount * 50;
+                                        
+                                        addScore(achievementBonus + purificationBonus);
 
-                                    showFloatingMessage(`🌿 ととのったー！ +${achievementBonus}点`, window.innerWidth/2, 230, "text-green-300");
-                                    if (jammerCount > 0) {
-                                        setTimeout(() => {
-                                            showFloatingMessage(`✨ 雑念浄化 ${jammerCount}個 +${purificationBonus}点`, window.innerWidth/2, 270, "text-amber-300");
-                                        }, 400);
-                                    }
+                                        showFloatingMessage(`🌿 ととのったー！ +${achievementBonus}点`, window.innerWidth/2, 230, "text-green-300");
 
-                                    removeAllJammers();
-                                    saunaClearCount = 0;
-                                    currentPhase = PHASE_SAUNA;
-                                    totonoClearStep = 0;
-                                    nextPiece = generateRandomPiece();
-                                    stopBGM();
-                                    startBGM();
-                                    updateUI();
+                                        // タメ演出（約0.8秒のウェイト＆雑念が光る演出）の追加
+                                        if (jammerCount > 0) {
+                                            for (let r = 0; r < ROWS; r++) {
+                                                for (let c = 0; c < COLS; c++) {
+                                                    if (board[r][c] === TYPE_JAMMER) {
+                                                        const el = document.getElementById(`cell-${r}-${c}`);
+                                                        if (el) el.classList.add('jammer-pulse');
+                                                    }
+                                                }
+                                            }
+
+                                            setTimeout(() => {
+                                                showFloatingMessage(`✨ 雑念浄化 ${jammerCount}個 +${purificationBonus}点`, window.innerWidth/2, 270, "text-amber-300");
+                                                removeAllJammers();
+                                                saunaClearCount = 0;
+                                                currentPhase = PHASE_SAUNA;
+                                                totonoClearStep = 0;
+                                                nextPiece = generateRandomPiece();
+                                                stopBGM();
+                                                startBGM();
+                                                updateUI();
+                                                applyGravityWithAnimation(() => {
+                                                    setTimeout(stepChain, 400);
+                                                });
+                                            }, 850);
+                                            return;
+                                        } else {
+                                            saunaClearCount = 0;
+                                            currentPhase = PHASE_SAUNA;
+                                            totonoClearStep = 0;
+                                            nextPiece = generateRandomPiece();
+                                            stopBGM();
+                                            startBGM();
+                                            updateUI();
+                                        }
+                                    }
+                                } else {
+                                    // 雑念ブロック自力消去のスコア（1個につき30点など）
+                                    let jammerScore = clearedCoords.length * 30;
+                                    addScore(jammerScore);
+                                    showFloatingMessage(`🌀 雑念消去 (+${jammerScore})`, window.innerWidth/2, 250, "text-slate-300");
                                 }
 
                                 applyGravityWithAnimation(() => {
@@ -1272,7 +1261,6 @@
             setTimeout(() => banner.remove(), 1200);
         }
 
-        // サウナフェーズ判定（赤 または オロポ）
         function getSaunaClearData() {
             let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
             let squareBonus = 0;
@@ -1324,7 +1312,6 @@
             return { clearedCoords, totalScore };
         }
 
-        // 水風呂フェーズ判定（青 または オロポ）
         function getColdBathClearData() {
             let queue = [];
             let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
@@ -1417,7 +1404,6 @@
             return { clearedCoords, totalScore };
         }
 
-        // ととのいフェーズ判定（緑 または オロポ）
         function getTotonoClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
 
@@ -1441,6 +1427,44 @@
                                 if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
                                     let nType = board[n.r][n.c];
                                     if ((nType === TYPE_TOTONO || nType === TYPE_OROPO) && !visited[n.r][n.c]) {
+                                        visited[n.r][n.c] = true;
+                                        queue.push(n);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (group.length >= 4) {
+                            return group;
+                        }
+                    }
+                }
+            }
+            return [];
+        }
+
+        // 雑念ブロックが4個以上繋がった場合の自力消去判定
+        function getJammerClearCoords() {
+            let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (board[r][c] === TYPE_JAMMER && !visited[r][c]) {
+                        let group = [];
+                        let queue = [{r, c}];
+                        visited[r][c] = true;
+
+                        while (queue.length > 0) {
+                            let curr = queue.shift();
+                            group.push(curr);
+
+                            let neighbors = [
+                                {r: curr.r-1, c: curr.c}, {r: curr.r+1, c: curr.c},
+                                {r: curr.r, c: curr.c-1}, {r: curr.r, c: curr.c+1}
+                            ];
+                            for (let n of neighbors) {
+                                if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
+                                    if (board[n.r][n.c] === TYPE_JAMMER && !visited[n.r][n.c]) {
                                         visited[n.r][n.c] = true;
                                         queue.push(n);
                                     }
