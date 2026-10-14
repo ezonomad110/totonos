@@ -225,7 +225,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.2.1 (連鎖とフェーズコンボ完全分離)</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.3.0 (連鎖とフェーズコンボ完全統合)</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -298,8 +298,8 @@
                         <div>
                             <p class="font-bold text-orange-400 text-[11px] mb-0.5">3. 必殺技「熱波」＆ 連鎖・コンボ</p>
                             <p>・<strong>熱波</strong>: スコア100点ごとに1%蓄積、100%で下段3段を一掃！</p>
-                            <p>・<strong>通常連鎖 (CHAIN!)</strong>: 同一フェーズ内での落下による連続消去。</p>
-                            <p>・<strong>フェーズコンボ (PHASE COMBO!)</strong>: フェーズ切替後の消去で強力な倍率ボーナス！</p>
+                            <p>・<strong>通常連鎖 (CHAIN!)</strong>: 落下による連続消去（フェーズをまたいでも連鎖維持）。</p>
+                            <p>・<strong>フェーズコンボ (PHASE COMBO!)</strong>: フェーズ切替ごとに途切れず消去成功で高倍率ボーナス！</p>
                         </div>
 
                     </div>
@@ -373,10 +373,11 @@
         let saunaClearCount = 0;
         let totonoClearStep = 0;
         
-        // カウントの完全分離管理
-        let chainCount = 0;          // 同一フェーズ内での落下連鎖数 (2 CHAIN, 3 CHAIN...)
-        let phaseComboCount = 0;     // フェーズコンボ連続回数 (PHASE COMBO!, 2 PHASE COMBO!...)
-        let lastScoredPhase = null;  // 最後にスコアが加算されたフェーズ（フェーズ切替判定用）
+        // カウント＆シークエンス管理変数
+        let chainCount = 0;             // 落下連鎖数（一連の連鎖シークエンスで累積）
+        let phaseComboCount = 0;        // フェーズコンボ連続数
+        let lastClearedPhase = null;    // 直前に消去に成功したフェーズ
+        let clearedInCurrentPhase = false; // 現在のフェーズになってから消去が発生したかフラグ
 
         let neppaGauge = 0;
         let isNeppaProcessing = false;
@@ -553,7 +554,8 @@
             totonoClearStep = 0;
             chainCount = 0;
             phaseComboCount = 0;
-            lastScoredPhase = null;
+            lastClearedPhase = null;
+            clearedInCurrentPhase = false;
             
             neppaGauge = 0;
             isNeppaProcessing = false;
@@ -832,7 +834,14 @@
             endHoldMove();
             currentPiece = null;
 
-            // 新規ピース着地時は通常連鎖カウントをリセット
+            // 新規ピース着地時のフェーズコンボ失敗チェック：
+            // フェーズ切り替えが発生していたのに前手番で消去が起きなかった場合、連続記録をリセット
+            if (!clearedInCurrentPhase && lastClearedPhase !== null && lastClearedPhase !== currentPhase) {
+                phaseComboCount = 0;
+            }
+
+            // 着地したため、この手番での消去フラグと通常連鎖カウントをリセット
+            clearedInCurrentPhase = false;
             chainCount = 0;
 
             applyGravityWithAnimation(() => {
@@ -843,7 +852,7 @@
             });
         }
 
-        // 連鎖とフェーズコンボを完全に分離した消去・重力ループ
+        // 通常連鎖とフェーズコンボを完全に統合・判定するメイン処理ループ
         function processClearsAndGravity(onComplete) {
             function stepChain() {
                 if (isPaused || isGameOver || isNeppaProcessing) return;
@@ -877,28 +886,24 @@
                 }
 
                 if (clearedCoords.length > 0) {
-                    let isPhaseCombo = false;
-                    let isNormalChain = false;
+                    // 1. 通常連鎖（CHAIN）の加算：落下による連続消去シークエンスとして一括管理
+                    chainCount++;
+
+                    let isPhaseComboTriggered = false;
                     let delayBeforeClear = 350;
 
                     if (!isJammerSelf) {
-                        if (lastScoredPhase === null) {
-                            // ゲーム開始後の最初の消去
-                            phaseComboCount = 1;
-                            isPhaseCombo = true;
-                        } else if (lastScoredPhase !== currentPhase) {
-                            // フェーズが変わった後の消去 ➔ 【フェーズコンボ成立！】
+                        clearedInCurrentPhase = true;
+
+                        // 2. フェーズコンボ（PHASE COMBO）の判定：直前に消去が成立したフェーズと異なる場合
+                        if (lastClearedPhase !== currentPhase) {
                             phaseComboCount++;
-                            isPhaseCombo = true;
-                        } else {
-                            // フェーズが変わらず、同じフェーズ内での消去 ➔ 【通常連鎖！ (落下による連鎖など)】
-                            chainCount++;
-                            isNormalChain = true;
+                            isPhaseComboTriggered = true;
                         }
-                        lastScoredPhase = currentPhase;
+                        lastClearedPhase = currentPhase;
                     }
 
-                    // ハイライト演出
+                    // セルハイライト演出
                     for (let cell of clearedCoords) {
                         const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
                         if (cellEl) {
@@ -911,12 +916,12 @@
 
                     playClearSound();
 
-                    // 演出の分岐：フェーズコンボならタメと専用バナー、通常連鎖ならスピーディーな連鎖表示
-                    if (isPhaseCombo) {
-                        delayBeforeClear = 550; // 約0.2秒のタメ
+                    // 演出表示の分岐
+                    if (isPhaseComboTriggered) {
+                        delayBeforeClear = 550; // タメ演出
                         let comboText = phaseComboCount === 1 ? "PHASE COMBO!" : `${phaseComboCount} PHASE COMBO!`;
                         showPhaseComboBanner(comboText);
-                    } else if (isNormalChain && chainCount > 1) {
+                    } else if (chainCount > 1) {
                         showFloatingMessage(`${chainCount} CHAIN!`, window.innerWidth/2, 250, "text-amber-400");
                     }
 
@@ -934,20 +939,9 @@
                                 board[cell.r][cell.c] = TYPE_EMPTY;
                             }
 
-                            // スコア計算・フェーズ移行
+                            // スコア＆倍率計算
                             if (actionType === 'SAUNA') {
-                                let finalScore = 0;
-                                if (isPhaseCombo) {
-                                    let mult = phaseComboCount === 1 ? 2.5 : (phaseComboCount === 2 ? 4.0 : 6.0);
-                                    let bonus = phaseComboCount === 1 ? 300 : (phaseComboCount === 2 ? 600 : 1000);
-                                    finalScore = Math.floor(baseScoreAdd * mult) + bonus;
-                                } else if (isNormalChain && chainCount > 1) {
-                                    let mult = chainCount === 2 ? 1.3 : (chainCount === 3 ? 1.6 : 2.0);
-                                    finalScore = Math.floor(baseScoreAdd * mult);
-                                } else {
-                                    finalScore = baseScoreAdd;
-                                }
-
+                                let finalScore = calculateScore(baseScoreAdd, isPhaseComboTriggered);
                                 addScore(finalScore);
                                 showFloatingMessage(`🔥 SAUNA CLEAR! (+${finalScore})`, window.innerWidth/2, 270, "text-red-400");
 
@@ -961,18 +955,7 @@
                                 });
                                 return;
                             } else if (actionType === 'COLD') {
-                                let finalScore = 0;
-                                if (isPhaseCombo) {
-                                    let mult = phaseComboCount === 1 ? 2.5 : (phaseComboCount === 2 ? 4.0 : 6.0);
-                                    let bonus = phaseComboCount === 1 ? 300 : (phaseComboCount === 2 ? 600 : 1000);
-                                    finalScore = Math.floor(baseScoreAdd * mult) + bonus;
-                                } else if (isNormalChain && chainCount > 1) {
-                                    let mult = chainCount === 2 ? 1.3 : (chainCount === 3 ? 1.6 : 2.0);
-                                    finalScore = Math.floor(baseScoreAdd * mult);
-                                } else {
-                                    finalScore = baseScoreAdd;
-                                }
-
+                                let finalScore = calculateScore(baseScoreAdd, isPhaseComboTriggered);
                                 addScore(finalScore);
                                 showFloatingMessage(`💧 COLD BATH CLEAR! (+${finalScore})`, window.innerWidth/2, 270, "text-blue-400");
 
@@ -988,18 +971,7 @@
                                 return;
                             } else if (actionType === 'TOTONO') {
                                 let baseTotonoScore = clearedCoords.length * 50;
-                                let finalScore = 0;
-                                if (isPhaseCombo) {
-                                    let mult = phaseComboCount === 1 ? 2.5 : (phaseComboCount === 2 ? 4.0 : 6.0);
-                                    let bonus = phaseComboCount === 1 ? 300 : (phaseComboCount === 2 ? 600 : 1000);
-                                    finalScore = Math.floor(baseTotonoScore * mult) + bonus;
-                                } else if (isNormalChain && chainCount > 1) {
-                                    let mult = chainCount === 2 ? 1.3 : (chainCount === 3 ? 1.6 : 2.0);
-                                    finalScore = Math.floor(baseTotonoScore * mult);
-                                } else {
-                                    finalScore = baseTotonoScore;
-                                }
-                                
+                                let finalScore = calculateScore(baseTotonoScore, isPhaseComboTriggered);
                                 addScore(finalScore);
                                 totonoClearStep++;
 
@@ -1011,6 +983,7 @@
                                 
                                 showTotonottaBanner(bannerText);
 
+                                // ととのい完遂（全浄化）の処理
                                 if (totonoClearStep >= 4) {
                                     let jammerCoords = [];
                                     for (let r = 0; r < ROWS; r++) {
@@ -1047,11 +1020,10 @@
                                                 for (let pt of jammerCoords) {
                                                     board[pt.r][pt.c] = TYPE_EMPTY;
                                                 }
+                                                // ととのい完遂後にサウナフェーズへ周回移行（連鎖やコンボは継続可能）
                                                 saunaClearCount = 0;
                                                 currentPhase = PHASE_SAUNA;
                                                 totonoClearStep = 0;
-                                                phaseComboCount = 0;
-                                                lastScoredPhase = null;
                                                 nextPiece = generateRandomPiece();
                                                 stopBGM();
                                                 startBGM();
@@ -1066,8 +1038,6 @@
                                         saunaClearCount = 0;
                                         currentPhase = PHASE_SAUNA;
                                         totonoClearStep = 0;
-                                        phaseComboCount = 0;
-                                        lastScoredPhase = null;
                                         nextPiece = generateRandomPiece();
                                         stopBGM();
                                         startBGM();
@@ -1092,10 +1062,30 @@
                         }, 650);
                     }, delayBeforeClear);
                 } else {
+                    // 追加消去が発生しない場合：一連の落下消去ループ完了
                     onComplete();
                 }
             }
             stepChain();
+        }
+
+        // 通常連鎖倍率とフェーズコンボ倍率を組み合わせたスコア計算ヘルパー
+        function calculateScore(baseScore, isPhaseCombo) {
+            let finalScore = baseScore;
+
+            // 通常連鎖倍率（2連鎖以上で適用）
+            if (chainCount === 2) finalScore = Math.floor(finalScore * 1.3);
+            else if (chainCount === 3) finalScore = Math.floor(finalScore * 1.6);
+            else if (chainCount >= 4) finalScore = Math.floor(finalScore * 2.0);
+
+            // フェーズコンボ倍率＆固定ボーナス
+            if (isPhaseCombo) {
+                let comboMult = phaseComboCount === 1 ? 2.5 : (phaseComboCount === 2 ? 4.0 : 6.0);
+                let comboBonus = phaseComboCount === 1 ? 300 : (phaseComboCount === 2 ? 600 : 1000);
+                finalScore = Math.floor(finalScore * comboMult) + comboBonus;
+            }
+
+            return finalScore;
         }
 
         function triggerNeppa() {
