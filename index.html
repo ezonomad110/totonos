@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -40,6 +39,22 @@
             border: 2px double rgba(255, 255, 255, 0.9);
         }
         
+        /* オロポブロック用スタイル */
+        @keyframes rainbow-border {
+            0% { border-color: #ff4500; box-shadow: 0 0 6px #ff4500, inset 0 0 4px rgba(255,255,255,0.8); }
+            20% { border-color: #ffd700; box-shadow: 0 0 6px #ffd700, inset 0 0 4px rgba(255,255,255,0.8); }
+            40% { border-color: #00ff7f; box-shadow: 0 0 6px #00ff7f, inset 0 0 4px rgba(255,255,255,0.8); }
+            60% { border-color: #00bfff; box-shadow: 0 0 6px #00bfff, inset 0 0 4px rgba(255,255,255,0.8); }
+            80% { border-color: #ff1493; box-shadow: 0 0 6px #ff1493, inset 0 0 4px rgba(255,255,255,0.8); }
+            100% { border-color: #ff4500; box-shadow: 0 0 6px #ff4500, inset 0 0 4px rgba(255,255,255,0.8); }
+        }
+        .block-oropo {
+            background: linear-gradient(135deg, #ffe066 0%, #f59f00 50%, #d9480f 100%);
+            border: 2.5px solid #ffd700;
+            animation: rainbow-border 3s linear infinite;
+            position: relative;
+        }
+
         @keyframes pulse-glow {
             0%, 100% { filter: drop-shadow(0 0 2px rgba(255,255,255,0.8)); }
             50% { filter: drop-shadow(0 0 8px rgba(255,255,255,1)); }
@@ -204,7 +219,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 2.9.3</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.0.0 (オロポ実装)</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -237,7 +252,7 @@
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
                                     <p>・<strong>消し方</strong>: 3×3以上の正方形を作って消去</p>
-                                    <p>・<strong>ポイント</strong>: 正方形が大きほどボーナスアップ！</p>
+                                    <p>・<strong>ポイント</strong>: 正方形が大きいほどボーナスアップ！</p>
                                     <div class="grid grid-cols-3 gap-0.5 w-12 h-12 my-1 bg-slate-900 p-0.5 rounded border border-red-500/50">
                                         <div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div>
                                         <div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div><div class="block-red rounded-[2px]"></div>
@@ -254,14 +269,10 @@
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
                                     <p>・<strong>消し方</strong>: 左右の端（左端から右端）へルートを繋げて消去（<strong>ジグザグでもOK！</strong>）</p>
                                     <p>・<strong>ポイント</strong>: ルート上のブロックに加え、<strong>上下左右にぴったりくっついている水風呂ブロックも一緒にすべて消えます！</strong></p>
-                                    <!-- 修正：上下の段が縦横の辺でしっかり噛み合い、2段目が左右に伸びて計5個の階段状に繋がったジグザ그イラスト -->
                                     <div class="flex justify-center my-1.5">
                                         <div class="grid grid-cols-7 gap-0.5 w-40 h-14 bg-slate-900 p-1 rounded border border-blue-500/50 items-center">
-                                            <!-- Row 1: 左側に2個 -->
                                             <div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div></div><div></div><div></div><div></div><div></div>
-                                            <!-- Row 2: 中央に5個（1列目から5列目まで連続して連結） -->
                                             <div></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div></div>
-                                            <!-- Row 3: 右側に2個 -->
                                             <div></div><div></div><div></div><div></div><div></div><div class="block-blue rounded-[2px] w-full aspect-square"></div><div class="block-blue rounded-[2px] w-full aspect-square"></div>
                                         </div>
                                     </div>
@@ -296,6 +307,22 @@
                                                 <div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div><div class="block-green rounded-[2px]"></div>
                                             </div>
                                             <span class="text-[7px] text-slate-400 mt-1 block">直線</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- オロポ -->
+                            <div class="bg-slate-950 p-2 rounded mb-1.5 border border-amber-400/80">
+                                <div class="flex items-center gap-1.5 font-bold text-amber-300 mb-0.5">
+                                    <span>🥤 オロポ（特殊）</span>
+                                </div>
+                                <div class="text-[9px] text-slate-300 space-y-0.5">
+                                    <p>・<strong>特徴</strong>: 全フェーズで万能に活躍する特別なブロック！</p>
+                                    <p>・<strong>ポイント</strong>: 見た目はそのまま、サウナでは赤、水風呂では青、ととのいでは緑として扱われます！</p>
+                                    <div class="flex justify-center my-1">
+                                        <div class="w-6 h-6 block-oropo rounded flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-amber-100 icon-glow"><use href="#icon-oropo"/></svg>
                                         </div>
                                     </div>
                                 </div>
@@ -372,6 +399,16 @@
         <symbol id="icon-leaf" viewBox="0 0 24 24">
             <path fill="currentColor" d="M17 8C8 10 5.9 16.17 3.82 21.35L5.71 22l1-2.3A20.01 20.01 0 0 0 19 12c1.1-.03 2-.92 2-2.03 0-.95-.68-1.76-1.6-1.94L17 8zm-7 8c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
         </symbol>
+        <!-- オロポ用グラスSVG -->
+        <symbol id="icon-oropo" viewBox="0 0 24 24">
+            <!-- グラス本体 -->
+            <path fill="currentColor" opacity="0.95" d="M6 3h12l-1.5 17a2 2 0 0 1-2 1.8H9.5a2 2 0 0 1-2-1.8L6 3z"/>
+            <!-- 氷 / 泡 -->
+            <rect x="8.5" y="6" width="3" height="3" rx="0.5" fill="#ffffff" opacity="0.9"/>
+            <rect x="12.5" y="8" width="3.5" height="3.5" rx="0.5" fill="#ffffff" opacity="0.9"/>
+            <!-- ストロー -->
+            <path d="M15 2l3-1.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        </symbol>
     </svg>
 
     <script>
@@ -383,6 +420,9 @@
         const TYPE_COLD = 2;
         const TYPE_JAMMER = 3;
         const TYPE_TOTONO = 4;
+        const TYPE_OROPO = 5; // オロポブロック
+
+        const OROPO_SPAWN_RATE = 0.05; // オロポ出現率（ブロック単位で5%）
 
         const PHASE_SAUNA = 1;
         const PHASE_COLD = 2;
@@ -722,16 +762,24 @@
             overlayEl.classList.remove('opacity-0', 'pointer-events-none');
         }
 
-        function generateRandomPiece() {
+        // オロポの出現ロジック（ブロック単位で5%）
+        function getRandomSingleBlockType() {
+            if (Math.random() < OROPO_SPAWN_RATE) {
+                return TYPE_OROPO;
+            }
             let types = [];
             if (currentPhase === PHASE_TOTONO) {
                 types = [TYPE_TOTONO, TYPE_TOTONO, TYPE_SAUNA, TYPE_COLD, TYPE_JAMMER];
             } else {
                 types = [TYPE_SAUNA, TYPE_COLD, TYPE_JAMMER];
             }
+            return types[Math.floor(Math.random() * types.length)];
+        }
+
+        function generateRandomPiece() {
             return {
-                type1: types[Math.floor(Math.random() * types.length)],
-                type2: types[Math.floor(Math.random() * types.length)],
+                type1: getRandomSingleBlockType(),
+                type2: getRandomSingleBlockType(),
                 x: Math.floor(COLS / 2) - 1,
                 y: 0,
                 rot: 2
@@ -769,6 +817,7 @@
                 case TYPE_COLD: return 'block-blue';
                 case TYPE_JAMMER: return 'block-gray';
                 case TYPE_TOTONO: return 'block-green';
+                case TYPE_OROPO: return 'block-oropo';
                 default: return 'bg-slate-900 border border-slate-800';
             }
         }
@@ -779,6 +828,7 @@
                 case TYPE_COLD: return '<svg class="w-3 h-3 text-white icon-glow"><use href="#icon-water"/></svg>';
                 case TYPE_JAMMER: return '<svg class="w-3 h-3 text-white"><use href="#icon-jammer"/></svg>';
                 case TYPE_TOTONO: return '<svg class="w-3 h-3 text-white icon-glow"><use href="#icon-leaf"/></svg>';
+                case TYPE_OROPO: return '<svg class="w-3 h-3 text-amber-100 icon-glow"><use href="#icon-oropo"/></svg>';
                 default: return '';
             }
         }
@@ -1222,6 +1272,7 @@
             setTimeout(() => banner.remove(), 1200);
         }
 
+        // サウナフェーズ判定（赤 または オロポ）
         function getSaunaClearData() {
             let toClearMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
             let squareBonus = 0;
@@ -1235,7 +1286,8 @@
                         let alreadyCleared = false;
                         for (let dr = 0; dr < size; dr++) {
                             for (let dc = 0; dc < size; dc++) {
-                                if (board[r + dr][c + dc] !== TYPE_SAUNA) {
+                                let type = board[r + dr][c + dc];
+                                if (type !== TYPE_SAUNA && type !== TYPE_OROPO) {
                                     isFullSquare = false;
                                 }
                                 if (toClearMap[r + dr][c + dc]) {
@@ -1272,13 +1324,15 @@
             return { clearedCoords, totalScore };
         }
 
+        // 水風呂フェーズ判定（青 または オロポ）
         function getColdBathClearData() {
             let queue = [];
             let dist = Array(ROWS).fill(null).map(() => Array(COLS).fill(Infinity));
             let prev = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
 
             for (let r = 0; r < ROWS; r++) {
-                if (board[r][0] === TYPE_COLD) {
+                let type = board[r][0];
+                if (type === TYPE_COLD || type === TYPE_OROPO) {
                     queue.push({r, c: 0});
                     dist[r][0] = 0;
                 }
@@ -1300,7 +1354,8 @@
 
                 for (let n of neighbors) {
                     if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
-                        if (board[n.r][n.c] === TYPE_COLD) {
+                        let nType = board[n.r][n.c];
+                        if (nType === TYPE_COLD || nType === TYPE_OROPO) {
                             if (dist[curr.r][curr.c] + 1 < dist[n.r][n.c]) {
                                 dist[n.r][n.c] = dist[curr.r][curr.c] + 1;
                                 prev[n.r][n.c] = {r: curr.r, c: curr.c};
@@ -1338,7 +1393,8 @@
                 ];
                 nbrs.forEach(n => {
                     if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
-                        if (board[n.r][n.c] === TYPE_COLD) {
+                        let nType = board[n.r][n.c];
+                        if (nType === TYPE_COLD || nType === TYPE_OROPO) {
                             finalClearMap[n.r][n.c] = true;
                         }
                     }
@@ -1361,12 +1417,14 @@
             return { clearedCoords, totalScore };
         }
 
+        // ととのいフェーズ判定（緑 または オロポ）
         function getTotonoClearCoords() {
             let visited = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
 
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
-                    if (board[r][c] === TYPE_TOTONO && !visited[r][c]) {
+                    let type = board[r][c];
+                    if ((type === TYPE_TOTONO || type === TYPE_OROPO) && !visited[r][c]) {
                         let group = [];
                         let queue = [{r, c}];
                         visited[r][c] = true;
@@ -1381,7 +1439,8 @@
                             ];
                             for (let n of neighbors) {
                                 if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS) {
-                                    if (board[n.r][n.c] === TYPE_TOTONO && !visited[n.r][n.c]) {
+                                    let nType = board[n.r][n.c];
+                                    if ((nType === TYPE_TOTONO || nType === TYPE_OROPO) && !visited[n.r][n.c]) {
                                         visited[n.r][n.c] = true;
                                         queue.push(n);
                                     }
@@ -1522,4 +1581,3 @@
     </script>
 </body>
 </html>
-
