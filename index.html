@@ -40,7 +40,6 @@
             border: 2px double rgba(255, 255, 255, 0.9);
         }
         
-        /* オロポブロック用スタイル */
         @keyframes rainbow-border {
             0% { border-color: #ff4500; box-shadow: 0 0 6px #ff4500, inset 0 0 4px rgba(255,255,255,0.8); }
             20% { border-color: #ffd700; box-shadow: 0 0 6px #ffd700, inset 0 0 4px rgba(255,255,255,0.8); }
@@ -79,7 +78,7 @@
             100% { transform: scale(1.4) rotate(5deg); opacity: 0; }
         }
         .combo-anim {
-            animation: combo-popup 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: combo-popup 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             pointer-events: none;
             z-index: 60;
             white-space: nowrap;
@@ -226,7 +225,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.1.1 (一括浄化アニメーション修正)</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.2.0 (連鎖・フェーズコンボ演出実装)</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -241,78 +240,66 @@
                     <h3 class="text-sm font-black text-amber-400 mb-1">遊び方ルール</h3>
                     <div class="text-[10px] text-slate-300 space-y-3 overflow-y-auto max-h-[210px] px-1.5 text-left w-full bg-slate-900/90 p-2.5 rounded-lg border border-slate-700 leading-relaxed">
                         
-                        <!-- 1. ゲームの基本構造とルール -->
                         <div>
                             <p class="font-bold text-amber-300 text-[11px] mb-0.5">1. ゲームの基本構造とルール</p>
                             <p>・<strong>3つのフェーズ</strong>: 「サウナ ➔ 水風呂 ➔ ととのい」の順に周回・変化します。</p>
                             <p>・<strong>ターゲット制限</strong>: 現在のフェーズに対応する色のブロックしか消せません。</p>
                         </div>
 
-                        <!-- 2. 各ブロックの説明と消し方 -->
                         <div>
                             <p class="font-bold text-emerald-300 text-[11px] mb-1">2. 各ブロックの説明と消し方</p>
                             
-                            <!-- サウナ -->
                             <div class="bg-slate-950 p-2 rounded mb-1.5 border border-red-500/40">
                                 <div class="flex items-center gap-1.5 font-bold text-red-400 mb-0.5">
                                     <span>🔥 サウナ（赤）</span>
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
                                     <p>・<strong>消し方</strong>: 3×3以上の正方形を作って消去</p>
-                                    <p>・<strong>ポイント</strong>: 正方形が大きいほどボーナスアップ！</p>
                                 </div>
                             </div>
 
-                            <!-- 水風呂 -->
                             <div class="bg-slate-950 p-2 rounded mb-1.5 border border-blue-500/40">
                                 <div class="flex items-center gap-1.5 font-bold text-blue-400 mb-0.5">
                                     <span>💧 水風呂（青）</span>
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
-                                    <p>・<strong>消し方</strong>: 左右の端（左端から右端）へルートを繋げて消去（<strong>ジグザグでもOK！</strong>）</p>
-                                    <p>・<strong>ポイント</strong>: ルート上のブロックに加え、<strong>上下左右にくっついている水風呂も一緒にすべて消えます！</strong></p>
+                                    <p>・<strong>消し方</strong>: 左右の端へルートを繋げて消去（上下左右の隣接水風呂も同時消去！）</p>
                                 </div>
                             </div>
 
-                            <!-- ととのい -->
                             <div class="bg-slate-950 p-2 rounded mb-1.5 border border-green-500/40">
                                 <div class="flex items-center gap-1.5 font-bold text-green-400 mb-0.5">
                                     <span>🌿 ととのい（緑）</span>
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
-                                    <p>・<strong>消し方</strong>: 4個以上を繋げて消去（L字・正方形・直線など4個以上でOK！）</p>
-                                    <p>・<strong>ポイント</strong>: 4回クリアで「ととのったー！」（＋1000点）＆盤面の雑念をすべて浄化！</p>
+                                    <p>・<strong>消し方</strong>: 4個以上を繋げて消去。4回クリアで「ととのったー！」＆雑念全浄化！</p>
                                 </div>
                             </div>
 
-                            <!-- オロポ -->
                             <div class="bg-slate-950 p-2 rounded mb-1.5 border border-amber-400/80">
                                 <div class="flex items-center gap-1.5 font-bold text-amber-300 mb-0.5">
                                     <span>🥤 オロポ（特殊）</span>
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
                                     <p>・<strong>特徴</strong>: 全フェーズで万能に活躍する特別なブロック！</p>
-                                    <p>・<strong>ポイント</strong>: 見た目はそのまま、各フェーズの色として万能に機能します。</p>
                                 </div>
                             </div>
 
-                            <!-- 雑念 -->
                             <div class="bg-slate-950 p-2 rounded border border-slate-600">
                                 <div class="flex items-center gap-1.5 font-bold text-slate-400 mb-0.5">
                                     <span>🌀 雑念ブロック（灰）</span>
                                 </div>
                                 <div class="text-[9px] text-slate-300 space-y-0.5">
-                                    <p>・<strong>消し方</strong>: ととのいブロックと同様に、<strong>縦横に4個以上繋げると自力で消去可能！</strong></p>
-                                    <p>・<strong>ポイント</strong>: さらに、ととのいフェーズを4回完遂した時には、盤面上のすべての雑念が自動浄化されます！</p>
+                                    <p>・<strong>消し方</strong>: 4個以上で自力消去可能（フェーズ変更なし）。</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 3. 必殺技「熱波」 -->
                         <div>
-                            <p class="font-bold text-orange-400 text-[11px] mb-0.5">3. 必殺技「熱波」</p>
-                            <p>・<strong>ゲージ蓄積</strong>: 通常パズルスコア<strong>100点ごとに1pt</strong>溜まります。</p>
-                            <p>・<strong>発動効果</strong>: 下段3段にある全ブロックを一掃します！</p>
+                            <p class="font-bold text-orange-400 text-[11px] mb-0.5">3. 必殺技「熱波」＆ 連鎖・コンボ</p>
+                            <p>・<strong>熱波</strong>: スコア100点ごとに1%蓄積、100%で下段3段を一掃！</p>
+                            <p>・<strong>通常連鎖 (CHAIN!)</strong>: 同一フェーズ内での連続消去。</p>
+                            <p>・<strong>フェーズコンボ (PHASE COMBO!)</strong>: フェーズをまたいだ連続成功で強力な倍率ボーナス！</p>
                         </div>
 
                     </div>
@@ -386,9 +373,10 @@
         let saunaClearCount = 0;
         let totonoClearStep = 0;
         
-        let phaseComboCount = 0;
-        let lastClearPhase = null;
-        let isChaining = false;
+        // カウントの独立管理
+        let chainCount = 0;          // 同一フェーズ内の通常連鎖数
+        let phaseComboCount = 0;     // フェーズコンボ連続回数
+        let lastClearedPhase = null; // 直前に消去が成立したフェーズ
 
         let neppaGauge = 0;
         let isNeppaProcessing = false;
@@ -563,9 +551,9 @@
             currentPhase = PHASE_SAUNA;
             saunaClearCount = 0;
             totonoClearStep = 0;
+            chainCount = 0;
             phaseComboCount = 0;
-            lastClearPhase = null;
-            isChaining = false;
+            lastClearedPhase = null;
             
             neppaGauge = 0;
             isNeppaProcessing = false;
@@ -844,8 +832,8 @@
             endHoldMove();
             currentPiece = null;
 
-            isChaining = false;
-            lastClearPhase = null;
+            // ピース着地時は通常連鎖カウントをリセット（新規着地からのスタート）
+            chainCount = 0;
 
             applyGravityWithAnimation(() => {
                 processClearsAndGravity(() => {
@@ -855,82 +843,61 @@
             });
         }
 
-        function evaluateCombo(currentClearedPhase) {
-            let comboMultiplied = false;
-
-            if (!isChaining) {
-                if (lastClearPhase === null) {
-                    phaseComboCount = 1;
-                } else {
-                    if (
-                        (lastClearPhase === PHASE_TOTONO && currentClearedPhase === PHASE_SAUNA) ||
-                        (lastClearPhase === PHASE_SAUNA && currentClearedPhase === PHASE_COLD) ||
-                        (lastClearPhase === PHASE_COLD && currentClearedPhase === PHASE_TOTONO)
-                    ) {
-                        phaseComboCount++;
-                        comboMultiplied = true;
-                    } else if (lastClearPhase === currentClearedPhase) {
-                        phaseComboCount++;
-                        comboMultiplied = true;
-                    } else {
-                        phaseComboCount = 1;
-                    }
-                }
-                isChaining = true;
-            } else {
-                if (
-                    (lastClearPhase === PHASE_TOTONO && currentClearedPhase === PHASE_SAUNA) ||
-                    (lastClearPhase === PHASE_SAUNA && currentClearedPhase === PHASE_COLD) ||
-                    (lastClearPhase === PHASE_COLD && currentClearedPhase === PHASE_TOTONO) ||
-                    (lastClearPhase === currentClearedPhase)
-                ) {
-                    phaseComboCount++;
-                    comboMultiplied = true;
-                } else {
-                    phaseComboCount = 1;
-                }
-            }
-
-            lastClearPhase = currentClearedPhase;
-
-            if (comboMultiplied && phaseComboCount > 1) {
-                showComboBanner(`${phaseComboCount} 連続コンボ！`);
-            }
-            return phaseComboCount;
-        }
-
+        // 継続的な消去処理（連鎖・フェーズコンボ判定）
         function processClearsAndGravity(onComplete) {
             function stepChain() {
                 if (isPaused || isGameOver || isNeppaProcessing) return;
                 let clearedCoords = [];
                 let actionType = null;
-                let saunaScoreAdd = 0;
-                let coldScoreAdd = 0;
+                let baseScoreAdd = 0;
 
+                // 現在のフェーズ条件で消去確認
                 if (currentPhase === PHASE_SAUNA) {
-                    let saunaData = getSaunaClearData();
-                    clearedCoords = saunaData.clearedCoords;
-                    saunaScoreAdd = saunaData.totalScore;
+                    let data = getSaunaClearData();
+                    clearedCoords = data.clearedCoords;
+                    baseScoreAdd = data.totalScore;
                     actionType = 'SAUNA';
                 } else if (currentPhase === PHASE_COLD) {
-                    let coldData = getColdBathClearData();
-                    clearedCoords = coldData.clearedCoords;
-                    coldScoreAdd = coldData.totalScore;
+                    let data = getColdBathClearData();
+                    clearedCoords = data.clearedCoords;
+                    baseScoreAdd = data.totalScore;
                     actionType = 'COLD';
                 } else if (currentPhase === PHASE_TOTONO) {
                     clearedCoords = getTotonoClearCoords();
                     actionType = 'TOTONO';
                 }
 
+                // フェーズ条件に合わなければ雑念ブロックの自力消去（4個以上）をチェック
+                let isJammerSelf = false;
                 if (clearedCoords.length === 0) {
                     let jammerCoords = getJammerClearCoords();
                     if (jammerCoords.length > 0) {
                         clearedCoords = jammerCoords;
                         actionType = 'JAMMER_SELF';
+                        isJammerSelf = true;
                     }
                 }
 
                 if (clearedCoords.length > 0) {
+                    // 1. フェーズコンボか、通常連鎖か、初回クリアかの判定
+                    let isPhaseTransitionClear = false;
+                    if (!isJammerSelf) {
+                        if (lastClearedPhase === null) {
+                            // ゲーム開始後の最初の消去
+                            phaseComboCount = 1;
+                            isPhaseTransitionClear = true;
+                        } else if (lastClearedPhase !== currentPhase) {
+                            // フェーズをまたいだ消去 ➔ フェーズコンボ成立！
+                            phaseComboCount++;
+                            isPhaseTransitionClear = true;
+                        } else {
+                            // 同じフェーズ内での連続消去 ➔ 通常連鎖！
+                            chainCount++;
+                        }
+                        lastClearedPhase = currentPhase;
+                    }
+
+                    // 演出対象ハイライト
                     for (let cell of clearedCoords) {
                         const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
                         if (cellEl) {
@@ -942,6 +909,16 @@
                     }
 
                     playClearSound();
+
+                    // フェーズコンボ専用の短い停止（約0.2秒）とフラッシュ演出
+                    let delayBeforeClear = 350;
+                    if (isPhaseTransitionClear && phaseComboCount >= 1) {
+                        delayBeforeClear = 550; // 約0.2秒のタメを追加
+                        let comboText = phaseComboCount === 1 ? "PHASE COMBO!" : `${phaseComboCount} PHASE COMBO!`;
+                        showPhaseComboBanner(comboText);
+                    } else if (chainCount > 1) {
+                        showFloatingMessage(`${chainCount} CHAIN!`, window.innerWidth/2, 250, "text-amber-400");
+                    }
 
                     setTimeout(() => {
                         for (let cell of clearedCoords) {
@@ -957,16 +934,24 @@
                                 board[cell.r][cell.c] = TYPE_EMPTY;
                             }
 
+                            // スコア計算・フェーズ進行処理
                             if (actionType === 'SAUNA') {
-                                let currentCombo = evaluateCombo(PHASE_SAUNA);
-                                let multiplier = currentCombo > 1 ? Math.pow(2, currentCombo - 1) * 1.5 : 1;
-                                let finalSaunaScore = Math.floor(saunaScoreAdd * multiplier);
+                                let finalScore = 0;
+                                if (isPhaseTransitionClear) {
+                                    // フェーズコンボの強力な倍率
+                                    let mult = phaseComboCount === 1 ? 2.5 : (phaseComboCount === 2 ? 4.0 : 6.0);
+                                    let bonus = phaseComboCount === 1 ? 300 : (phaseComboCount === 2 ? 600 : 1000);
+                                    finalScore = Math.floor(baseScoreAdd * mult) + bonus;
+                                } else if (chainCount > 1) {
+                                    // 通常連鎖の堅実な倍率
+                                    let mult = chainCount === 2 ? 1.3 : (chainCount === 3 ? 1.6 : 2.0);
+                                    finalScore = Math.floor(baseScoreAdd * mult);
+                                } else {
+                                    finalScore = baseScoreAdd;
+                                }
 
-                                addScore(finalSaunaScore);
-                                
-                                let msg = `🔥 SAUNA CLEAR! (+${finalSaunaScore})`;
-                                if (currentCombo > 1) msg = `🔥 ${currentCombo} COMBO! SAUNA (+${finalSaunaScore})`;
-                                showFloatingMessage(msg, window.innerWidth/2, 250, "text-blue-400");
+                                addScore(finalScore);
+                                showFloatingMessage(`🔥 SAUNA CLEAR! (+${finalScore})`, window.innerWidth/2, 270, "text-red-400");
 
                                 saunaClearCount++;
                                 currentPhase = PHASE_COLD;
@@ -978,15 +963,20 @@
                                 });
                                 return;
                             } else if (actionType === 'COLD') {
-                                let currentCombo = evaluateCombo(PHASE_COLD);
-                                let multiplier = currentCombo > 1 ? Math.pow(2, currentCombo - 1) * 1.5 : 1;
-                                let finalColdScore = Math.floor(coldScoreAdd * multiplier);
+                                let finalScore = 0;
+                                if (isPhaseTransitionClear) {
+                                    let mult = phaseComboCount === 1 ? 2.5 : (phaseComboCount === 2 ? 4.0 : 6.0);
+                                    let bonus = phaseComboCount === 1 ? 300 : (phaseComboCount === 2 ? 600 : 1000);
+                                    finalScore = Math.floor(baseScoreAdd * mult) + bonus;
+                                } else if (chainCount > 1) {
+                                    let mult = chainCount === 2 ? 1.3 : (chainCount === 3 ? 1.6 : 2.0);
+                                    finalScore = Math.floor(baseScoreAdd * mult);
+                                } else {
+                                    finalScore = baseScoreAdd;
+                                }
 
-                                addScore(finalColdScore);
-
-                                let msg = `💧 COLD BATH CLEAR! (+${finalColdScore})`;
-                                if (currentCombo > 1) msg = `💧 ${currentCombo} COMBO! COLD (+${finalColdScore})`;
-                                showFloatingMessage(msg, window.innerWidth/2, 250, "text-green-400");
+                                addScore(finalScore);
+                                showFloatingMessage(`💧 COLD BATH CLEAR! (+${finalScore})`, window.innerWidth/2, 270, "text-blue-400");
 
                                 currentPhase = PHASE_TOTONO;
                                 totonoClearStep = 0;
@@ -998,91 +988,105 @@
                                     setTimeout(stepChain, 400);
                                 });
                                 return;
-                            } else if (actionType === 'TOTONO' || actionType === 'JAMMER_SELF') {
-                                if (actionType === 'TOTONO') {
-                                    let currentCombo = evaluateCombo(PHASE_TOTONO);
-                                    let baseTotonoScore = clearedCoords.length * 50;
-                                    let finalTotonoScore = Math.floor(baseTotonoScore * (currentCombo > 1 ? Math.pow(2, currentCombo - 1) * 1.5 : 1));
-                                    
-                                    addScore(finalTotonoScore);
+                            } else if (actionType === 'TOTONO') {
+                                let baseTotonoScore = clearedCoords.length * 50;
+                                let finalScore = 0;
+                                if (isPhaseTransitionClear) {
+                                    let mult = phaseComboCount === 1 ? 2.5 : (phaseComboCount === 2 ? 4.0 : 6.0);
+                                    let bonus = phaseComboCount === 1 ? 300 : (phaseComboCount === 2 ? 600 : 1000);
+                                    finalScore = Math.floor(baseTotonoScore * mult) + bonus;
+                                } else if (chainCount > 1) {
+                                    let mult = chainCount === 2 ? 1.3 : (chainCount === 3 ? 1.6 : 2.0);
+                                    finalScore = Math.floor(baseTotonoScore * mult);
+                                } else {
+                                    finalScore = baseTotonoScore;
+                                }
+                                
+                                addScore(finalScore);
+                                totonoClearStep++;
 
-                                    totonoClearStep++;
+                                let bannerText = "";
+                                if (totonoClearStep === 1) bannerText = "と...！";
+                                else if (totonoClearStep === 2) bannerText = "とと...！！";
+                                else if (totonoClearStep === 3) bannerText = "ととの...！！！";
+                                else if (totonoClearStep >= 4) bannerText = "ととのったー！✨";
+                                
+                                showTotonottaBanner(bannerText);
 
-                                    let bannerText = "";
-                                    if (totonoClearStep === 1) bannerText = "と...！";
-                                    else if (totonoClearStep === 2) bannerText = "とと...！！";
-                                    else if (totonoClearStep === 3) bannerText = "ととの...！！！";
-                                    else if (totonoClearStep >= 4) bannerText = "ととのったー！✨";
-                                    
-                                    showTotonottaBanner(bannerText);
-
-                                    // 4回完遂時の全雑念浄化（タメ演出 ＋ アニメーション付き消去）
-                                    if (totonoClearStep >= 4) {
-                                        let jammerCoords = [];
-                                        for (let r = 0; r < ROWS; r++) {
-                                            for (let c = 0; c < COLS; c++) {
-                                                if (board[r][c] === TYPE_JAMMER) {
-                                                    jammerCoords.push({r, c});
-                                                }
+                                // 4回完遂時の全雑念浄化
+                                if (totonoClearStep >= 4) {
+                                    let jammerCoords = [];
+                                    for (let r = 0; r < ROWS; r++) {
+                                        for (let c = 0; c < COLS; c++) {
+                                            if (board[r][c] === TYPE_JAMMER) {
+                                                jammerCoords.push({r, c});
                                             }
-                                        }
-                                        let achievementBonus = 1000;
-                                        let purificationBonus = jammerCoords.length * 50;
-                                        
-                                        addScore(achievementBonus + purificationBonus);
-
-                                        showFloatingMessage(`🌿 ととのったー！ +${achievementBonus}点`, window.innerWidth/2, 230, "text-green-300");
-
-                                        if (jammerCoords.length > 0) {
-                                            for (let pt of jammerCoords) {
-                                                const el = document.getElementById(`cell-${pt.r}-${pt.c}`);
-                                                if (el) el.classList.add('jammer-pulse');
-                                            }
-
-                                            // タメ演出（約0.8秒ウェイト）の後に一括アニメーション消去
-                                            setTimeout(() => {
-                                                showFloatingMessage(`✨ 雑念浄化 ${jammerCoords.length}個 +${purificationBonus}点`, window.innerWidth/2, 270, "text-amber-300");
-                                                
-                                                for (let pt of jammerCoords) {
-                                                    const el = document.getElementById(`cell-${pt.r}-${pt.c}`);
-                                                    if (el) {
-                                                        el.classList.remove('jammer-pulse');
-                                                        el.classList.add('clearing-anim');
-                                                    }
-                                                }
-
-                                                setTimeout(() => {
-                                                    for (let pt of jammerCoords) {
-                                                        board[pt.r][pt.c] = TYPE_EMPTY;
-                                                    }
-                                                    saunaClearCount = 0;
-                                                    currentPhase = PHASE_SAUNA;
-                                                    totonoClearStep = 0;
-                                                    nextPiece = generateRandomPiece();
-                                                    stopBGM();
-                                                    startBGM();
-                                                    updateUI();
-                                                    applyGravityWithAnimation(() => {
-                                                        setTimeout(stepChain, 400);
-                                                    });
-                                                }, 650);
-                                            }, 850);
-                                            return;
-                                        } else {
-                                            saunaClearCount = 0;
-                                            currentPhase = PHASE_SAUNA;
-                                            totonoClearStep = 0;
-                                            nextPiece = generateRandomPiece();
-                                            stopBGM();
-                                            startBGM();
-                                            updateUI();
                                         }
                                     }
-                                } else {
-                                    let jammerScore = clearedCoords.length * 30;
-                                    addScore(jammerScore);
-                                    showFloatingMessage(`🌀 雑念消去 (+${jammerScore})`, window.innerWidth/2, 250, "text-slate-300");
+                                    let achievementBonus = 1000;
+                                    let purificationBonus = jammerCoords.length * 50;
+                                    
+                                    addScore(achievementBonus + purificationBonus);
+                                    showFloatingMessage(`🌿 ととのったー！ +${achievementBonus}点`, window.innerWidth/2, 230, "text-green-300");
+
+                                    if (jammerCoords.length > 0) {
+                                        for (let pt of jammerCoords) {
+                                            const el = document.getElementById(`cell-${pt.r}-${pt.c}`);
+                                            if (el) el.classList.add('jammer-pulse');
+                                        }
+
+                                        setTimeout(() => {
+                                            showFloatingMessage(`✨ 雑念浄化 ${jammerCoords.length}個 +${purificationBonus}点`, window.innerWidth/2, 270, "text-amber-300");
+                                            
+                                            for (let pt of jammerCoords) {
+                                                const el = document.getElementById(`cell-${pt.r}-${pt.c}`);
+                                                if (el) {
+                                                    el.classList.remove('jammer-pulse');
+                                                    el.classList.add('clearing-anim');
+                                                }
+                                            }
+
+                                            setTimeout(() => {
+                                                for (let pt of jammerCoords) {
+                                                    board[pt.r][pt.c] = TYPE_EMPTY;
+                                                }
+                                                saunaClearCount = 0;
+                                                currentPhase = PHASE_SAUNA;
+                                                totonoClearStep = 0;
+                                                phaseComboCount = 0; // 完遂時はリセット
+                                                lastClearedPhase = null;
+                                                nextPiece = generateRandomPiece();
+                                                stopBGM();
+                                                startBGM();
+                                                updateUI();
+                                                applyGravityWithAnimation(() => {
+                                                    setTimeout(stepChain, 400);
+                                                });
+                                            }, 650);
+                                        }, 850);
+                                        return;
+                                    } else {
+                                        saunaClearCount = 0;
+                                        currentPhase = PHASE_SAUNA;
+                                        totonoClearStep = 0;
+                                        phaseComboCount = 0;
+                                        lastClearedPhase = null;
+                                        nextPiece = generateRandomPiece();
+                                        stopBGM();
+                                        startBGM();
+                                        updateUI();
+                                    }
                                 }
+
+                                applyGravityWithAnimation(() => {
+                                    setTimeout(stepChain, 400);
+                                });
+                                return;
+                            } else if (actionType === 'JAMMER_SELF') {
+                                // 雑念ブロックの自力消去はフェーズコンボ回数に影響しない
+                                let jammerScore = clearedCoords.length * 30;
+                                addScore(jammerScore);
+                                showFloatingMessage(`🌀 雑念消去 (+${jammerScore})`, window.innerWidth/2, 250, "text-slate-300");
 
                                 applyGravityWithAnimation(() => {
                                     setTimeout(stepChain, 400);
@@ -1090,8 +1094,10 @@
                                 return;
                             }
                         }, 650);
-                    }, 350);
+                    }, delayBeforeClear);
                 } else {
+                    // 消去が起きなかった場合、フェーズコンボの連続記録を終了
+                    // （次のピース操作や落下待ちになるためリセット）
                     onComplete();
                 }
             }
@@ -1253,20 +1259,20 @@
             setTimeout(() => banner.remove(), 1400);
         }
 
+        function showPhaseComboBanner(text) {
+            const banner = document.createElement('div');
+            banner.className = 'absolute inset-0 flex items-center justify-center z-50 pointer-events-none';
+            banner.innerHTML = `<div class="text-xl sm:text-3xl font-black text-amber-300 drop-shadow-[0_6px_6px_rgba(0,0,0,0.9)] bg-indigo-950/95 px-6 py-3 rounded-2xl border-4 border-amber-400 combo-anim">✨ ${text} ✨</div>`;
+            boardContainerEl.appendChild(banner);
+            setTimeout(() => banner.remove(), 1200);
+        }
+
         function showNeppaBanner(text) {
             const banner = document.createElement('div');
             banner.className = 'absolute inset-0 flex items-center justify-center z-40 pointer-events-none';
             banner.innerHTML = `<div class="text-2xl sm:text-4xl font-black text-orange-300 drop-shadow-[0_6px_6px_rgba(0,0,0,0.9)] bg-slate-950/90 px-6 py-3 rounded-2xl border-4 border-orange-500 neppa-banner-anim">${text}</div>`;
             boardContainerEl.appendChild(banner);
             setTimeout(() => banner.remove(), 1400);
-        }
-
-        function showComboBanner(text) {
-            const banner = document.createElement('div');
-            banner.className = 'absolute inset-0 flex items-center justify-center z-50 pointer-events-none';
-            banner.innerHTML = `<div class="text-xl sm:text-3xl font-black text-amber-300 drop-shadow-[0_6px_6px_rgba(0,0,0,0.9)] bg-red-600/95 px-6 py-3 rounded-2xl border-4 border-amber-300 combo-anim">🔥 ${text} 🔥</div>`;
-            boardContainerEl.appendChild(banner);
-            setTimeout(() => banner.remove(), 1200);
         }
 
         function getSaunaClearData() {
@@ -1602,4 +1608,3 @@
     </script>
 </body>
 </html>
-
