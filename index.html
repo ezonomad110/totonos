@@ -239,7 +239,7 @@
                 
                 <div id="menu-main" class="flex flex-col items-center justify-center w-full">
                     <h2 id="overlay-title" class="text-2xl sm:text-3xl font-black mb-1 text-amber-400 drop-shadow-md">TOTONOS</h2>
-                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.5.0 (通常連鎖演出強化)</p>
+                    <p class="text-[11px] font-bold text-emerald-400 mb-1">Version 3.6.0 (フェーズコンボ誤爆修正)</p>
                     <p id="overlay-desc" class="text-[11px] text-slate-300 mb-4 text-center">サウナ・水風呂・ととのいを巡る落ちものパズル</p>
                     <button id="start-btn" onclick="startGame()" class="w-full max-w-[180px] py-2.5 bg-gradient-to-r from-orange-500 to-red-600 font-black rounded-xl text-base glossy active:scale-95 transition shadow-lg hover:brightness-110 mb-2">
                         ゲームスタート
@@ -388,10 +388,11 @@
         let totonoClearStep = 0;
         
         // カウント＆シークエンス管理変数
-        let chainCount = 0;             // 落下連鎖数（一連の連鎖シークエンスで累積）
+        let chainCount = 0;             // 落下連鎖数
         let phaseComboCount = 0;        // フェーズコンボ連続数
         let lastClearedPhase = null;    // 直前に消去に成功したフェーズ
         let clearedInCurrentPhase = false; // 現在のフェーズになってから消去が発生したかフラグ
+        let pendingPhaseTransition = false; // フェーズが切り替わったがまだそのフェーズで消去していないフラグ
 
         let neppaGauge = 0;
         let isNeppaProcessing = false;
@@ -570,6 +571,7 @@
             phaseComboCount = 0;
             lastClearedPhase = null;
             clearedInCurrentPhase = false;
+            pendingPhaseTransition = false;
             
             neppaGauge = 0;
             isNeppaProcessing = false;
@@ -848,8 +850,11 @@
             endHoldMove();
             currentPiece = null;
 
-            if (!clearedInCurrentPhase && lastClearedPhase !== null && lastClearedPhase !== currentPhase) {
+            // 着地時のフェーズコンボ失敗チェック
+            // フェーズが切り替わった後、1度も消去を成功させずに着地させた場合のみリセット
+            if (!clearedInCurrentPhase && pendingPhaseTransition) {
                 phaseComboCount = 0;
+                pendingPhaseTransition = false;
             }
 
             clearedInCurrentPhase = false;
@@ -904,11 +909,16 @@
                     if (!isJammerSelf) {
                         clearedInCurrentPhase = true;
 
-                        if (lastClearedPhase !== null && lastClearedPhase !== currentPhase) {
+                        // フェーズコンボの厳密な発動条件：
+                        // 「前回の消去フェーズ（lastClearedPhase）」と「現在のフェーズ（currentPhase）」が異なっており、
+                        // かつ直前のフェーズ切り替え時にまだコンボが消化されていない場合のみ発動
+                        if (pendingPhaseTransition && lastClearedPhase !== null && lastClearedPhase !== currentPhase) {
                             phaseComboCount++;
                             isPhaseComboTriggered = true;
+                            pendingPhaseTransition = false;
                         } else if (lastClearedPhase === null) {
                             phaseComboCount = 0;
+                            pendingPhaseTransition = false;
                         }
                         lastClearedPhase = currentPhase;
                     }
@@ -930,7 +940,6 @@
                         let comboText = phaseComboCount === 1 ? "PHASE COMBO!" : `${phaseComboCount} PHASE COMBO!`;
                         showPhaseComboBanner(comboText);
                     } else if (chainCount > 1) {
-                        // 通常連鎖表示を大きく目立たせるためのバナー演出
                         showChainBanner(`${chainCount} CHAIN!`);
                     }
 
@@ -955,6 +964,7 @@
 
                                 saunaClearCount++;
                                 currentPhase = PHASE_COLD;
+                                pendingPhaseTransition = true;
                                 stopBGM();
                                 startBGM();
                                 updateUI();
@@ -968,6 +978,7 @@
                                 showFloatingMessage(`💧 COLD BATH CLEAR! (+${finalScore})`, window.innerWidth/2, 270, "text-blue-400");
 
                                 currentPhase = PHASE_TOTONO;
+                                pendingPhaseTransition = true;
                                 totonoClearStep = 0;
                                 nextPiece = generateRandomPiece();
                                 stopBGM();
@@ -979,7 +990,7 @@
                                 return;
                             } else if (actionType === 'TOTONO') {
                                 let baseTotonoScore = clearedCoords.length * 50;
-                                let finalScore = calculateScore(baseTotonoScore, isPhaseComboTriggered);
+                                let finalScore = calculateScore(baseScoreAdd, isPhaseComboTriggered);
                                 addScore(finalScore);
                                 totonoClearStep++;
 
@@ -1029,6 +1040,7 @@
                                                 }
                                                 saunaClearCount = 0;
                                                 currentPhase = PHASE_SAUNA;
+                                                pendingPhaseTransition = true;
                                                 totonoClearStep = 0;
                                                 nextPiece = generateRandomPiece();
                                                 stopBGM();
@@ -1043,6 +1055,7 @@
                                     } else {
                                         saunaClearCount = 0;
                                         currentPhase = PHASE_SAUNA;
+                                        pendingPhaseTransition = true;
                                         totonoClearStep = 0;
                                         nextPiece = generateRandomPiece();
                                         stopBGM();
